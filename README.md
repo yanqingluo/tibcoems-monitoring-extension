@@ -1,4 +1,4 @@
-tibcoems-monitoring-extension
+AppDynamics Tibco EMS Monitoring Extension
 =============================
 
 tibcoems-monitoring-extension
