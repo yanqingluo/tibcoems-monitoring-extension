@@ -13,7 +13,6 @@ import com.singularity.ee.util.clock.ClockUtils;
 import com.tibco.tibjms.admin.QueueInfo;
 import com.tibco.tibjms.admin.ServerInfo;
 import com.tibco.tibjms.admin.TibjmsAdmin;
-import com.tibco.tibjms.admin.TibjmsAdminException;
 
 /**
  * 
@@ -31,6 +30,9 @@ public class TibcoEMSMonitor extends JavaExtensionHelper {
 	private volatile String port;
 
 	public TibcoEMSMonitor() {
+		String msg = "Using Monitor Version ["+getImplementationVersion()+"]";
+		logger.info(msg);
+		System.out.println(msg);
 		oldValueMap = Collections
 				.synchronizedMap(new HashMap<String, String>());
 	}
@@ -69,49 +71,30 @@ public class TibcoEMSMonitor extends JavaExtensionHelper {
 		}
 	}
 
-	private TibjmsAdmin connect() throws TibjmsAdminException {
-
-		TibjmsAdmin tibcoAdmin = new TibjmsAdmin("tcp://" + hostname + ":"
-				+ port, userid, password);
-
+	private TibjmsAdmin connect(){
+		TibjmsAdmin tibcoAdmin = null;
+		try{
+			tibcoAdmin = new TibjmsAdmin("tcp://" + hostname + ":"
+					+ port, userid, password);
+		//need improvement
+		}catch(Throwable e){
+			logger.debug("Issue while connecting with EMS server...",e);
+		}
 		return tibcoAdmin;
 	}
 
 	// collects all monitoring data for this time period from database
 	private Map<String, String> putValuesIntoMap() throws Exception {
-
 		logger.debug("Started adding metrics");
-
 		Map<String, String> columnName2Value = new HashMap<String, String>();
-
 		TibjmsAdmin conn = null;
 		boolean debug = logger.isDebugEnabled();
 		try {
 			conn = connect();
-			logger.debug("Connection: " + conn);
-			if (debug) {
-				logger.debug("Connecting to " + conn.getInfo());
+			if(conn == null){
+				logger.debug("Connection Failed! " + conn);
 			}
-
 			ServerInfo serverInfo = conn.getInfo();
-			serverInfo.getAsyncDBSize();
-			serverInfo.getDetailedStatistics();
-			serverInfo.getConsumerCount();
-			serverInfo.getDiskReadRate();
-			serverInfo.getDiskWriteRate();
-			serverInfo.getInboundBytesRate();
-
-			serverInfo.getInboundMessageRate();
-			serverInfo.getOutboundBytesRate();
-			serverInfo.getOutboundMessageCount();
-			serverInfo.getOutboundMessageRate();
-			serverInfo.getMaxClientMsgSize();
-			serverInfo.getMaxConnections();
-			serverInfo.getMaxMsgMemory();
-			serverInfo.getMaxStatisticsMemory();
-			serverInfo.getProducerCount();
-			serverInfo.getConsumerCount();
-
 			if (debug) {
 				logger.debug("ConnectionCount	"
 						+ serverInfo.getConnectionCount());
@@ -147,23 +130,23 @@ public class TibcoEMSMonitor extends JavaExtensionHelper {
 						new Integer(queueInfo.getConsumerCount()).toString());
 				columnName2Value.put(queueInfo.getName()
 						+ "|DeliveredMessageCount".toUpperCase(), new Long(
-						queueInfo.getDeliveredMessageCount()).toString());
+								queueInfo.getDeliveredMessageCount()).toString());
 				columnName2Value
-						.put(queueInfo.getName()
-								+ "|ConsumerCount".toUpperCase(), new Long(
+				.put(queueInfo.getName()
+						+ "|ConsumerCount".toUpperCase(), new Long(
 								queueInfo.getFlowControlMaxBytes()).toString());
 				columnName2Value.put(queueInfo.getName()
 						+ "|PendingMessageCount".toUpperCase(), new Long(
-						queueInfo.getPendingMessageCount()).toString());
+								queueInfo.getPendingMessageCount()).toString());
 				columnName2Value.put(queueInfo.getName()
 						+ "|FlowControlMaxBytes".toUpperCase(), new Long(
-						queueInfo.getFlowControlMaxBytes()).toString());
+								queueInfo.getFlowControlMaxBytes()).toString());
 				columnName2Value.put(
 						queueInfo.getName() + "|MaxMsgs".toUpperCase(),
 						new Long(queueInfo.getMaxMsgs()).toString());
 				columnName2Value.put(queueInfo.getName()
 						+ "|PendingMessageSize".toUpperCase(), new Long(
-						queueInfo.getPendingMessageSize()).toString());
+								queueInfo.getPendingMessageSize()).toString());
 				columnName2Value.put(
 						queueInfo.getName() + "|ReceiverCount".toUpperCase(),
 						new Long(queueInfo.getReceiverCount()).toString());
@@ -205,6 +188,7 @@ public class TibcoEMSMonitor extends JavaExtensionHelper {
 			throw ex;
 
 		} finally {
+			logger.info("Closing connection");
 			conn.close();
 		}
 		return Collections.synchronizedMap(columnName2Value);
@@ -219,7 +203,7 @@ public class TibcoEMSMonitor extends JavaExtensionHelper {
 
 		Map<String, String> map;
 		try {
-			map = this.putValuesIntoMap();
+			map = putValuesIntoMap();
 			Iterator<String> keys = map.keySet().iterator();
 			while (keys.hasNext()) {
 				String key = (String) keys.next();
@@ -252,5 +236,7 @@ public class TibcoEMSMonitor extends JavaExtensionHelper {
 			return "Custom Metrics|Tibco EMS Server|";
 		}
 	}
-
+	public static String getImplementationVersion(){
+		return TibcoEMSMonitor.class.getPackage().getImplementationTitle();
+	}
 }
