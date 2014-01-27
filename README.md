@@ -24,6 +24,7 @@ tibjmsadmin.jar
 2. Run "mvn clean install"
 3. Download and unzip the file 'target/TibcoEMSMonitor.zip' to \<machineagent install dir\>/monitors
 4. Open monitor.xml and configure the TibcoEMS arguments.
+5. Add the line "statistics=enabled" to tibemsd.conf
 
 
 ## Metrics
