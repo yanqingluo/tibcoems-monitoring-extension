@@ -12,6 +12,7 @@ import com.singularity.ee.agent.systemagent.api.exception.TaskExecutionException
 import com.singularity.ee.util.clock.ClockUtils;
 import com.tibco.tibjms.admin.QueueInfo;
 import com.tibco.tibjms.admin.ServerInfo;
+import com.tibco.tibjms.admin.StatData;
 import com.tibco.tibjms.admin.TibjmsAdmin;
 
 /**
@@ -20,6 +21,7 @@ import com.tibco.tibjms.admin.TibjmsAdmin;
  * 
  */
 public class TibcoEMSMonitor extends JavaExtensionHelper {
+
 	private volatile String tierName;
 	private volatile String serverName;
 	private volatile int refreshIntervalInExecutionTicks;
@@ -76,7 +78,7 @@ public class TibcoEMSMonitor extends JavaExtensionHelper {
 		try{
 			tibcoAdmin = new TibjmsAdmin("tcp://" + hostname + ":"
 					+ port, userid, password);
-		//need improvement
+			//need improvement
 		}catch(Throwable e){
 			logger.debug("Issue while connecting with EMS server...",e);
 		}
@@ -95,28 +97,35 @@ public class TibcoEMSMonitor extends JavaExtensionHelper {
 				logger.debug("Connection Failed! " + conn);
 			}
 			ServerInfo serverInfo = conn.getInfo();
-			if (debug) {
-				logger.debug("ConnectionCount	"
-						+ serverInfo.getConnectionCount());
-				logger.debug("PendingMessageCount	"
-						+ serverInfo.getPendingMessageCount());
-				logger.debug("PendingMessageSize	"
-						+ serverInfo.getPendingMessageSize());
-				logger.debug("InboundMessageCount	"
-						+ serverInfo.getInboundMessageCount());
-				logger.debug("OutboundMessageCount	"
-						+ serverInfo.getOutboundMessageCount());
-			}
 			columnName2Value.put("ConnectionCount",
-					new Integer(serverInfo.getConnectionCount()).toString());
+					new Integer(serverInfo.getConnectionCount()-1).toString());
+			columnName2Value.put("MaxConnections",
+					new Integer(serverInfo.getMaxConnections()).toString());
+			columnName2Value.put("ProducerCount",
+					new Long(serverInfo.getProducerCount()).toString());
+			columnName2Value.put("ConsumerCount",
+					new Long(serverInfo.getConsumerCount()).toString());
 			columnName2Value.put("PendingMessageCount",
 					new Long(serverInfo.getPendingMessageCount()).toString());
 			columnName2Value.put("PendingMessageSize",
 					new Long(serverInfo.getPendingMessageSize()).toString());
+
 			columnName2Value.put("InboundMessageCount",
 					new Long(serverInfo.getInboundMessageCount()).toString());
+			columnName2Value.put("InboundMessageRate",
+					new Long(serverInfo.getInboundMessageRate()).toString());
+			columnName2Value.put("InboundByteRate",
+					new Long(serverInfo.getInboundBytesRate()).toString());
+
 			columnName2Value.put("OutboundMessageCount",
 					new Long(serverInfo.getOutboundMessageCount()).toString());
+			columnName2Value.put("OutboundMessageRate",
+					new Long(serverInfo.getOutboundMessageRate()).toString());
+			columnName2Value.put("OutboundByteRate",
+					new Long(serverInfo.getOutboundBytesRate()).toString());
+
+
+
 
 			// get most accurate time
 			currentTime = System.currentTimeMillis();
@@ -124,55 +133,69 @@ public class TibcoEMSMonitor extends JavaExtensionHelper {
 			QueueInfo[] queueInformation = conn.getQueuesStatistics();
 			for (int i = 0; i < queueInformation.length; i++) {
 				QueueInfo queueInfo = queueInformation[i];
+				if(!queueInfo.getName().contains("$TMP$")){// skip $TMP$ queues
 
-				columnName2Value.put(
-						queueInfo.getName() + "|ConsumerCount".toUpperCase(),
-						new Integer(queueInfo.getConsumerCount()).toString());
-				columnName2Value.put(queueInfo.getName()
-						+ "|DeliveredMessageCount".toUpperCase(), new Long(
-								queueInfo.getDeliveredMessageCount()).toString());
-				columnName2Value
-				.put(queueInfo.getName()
-						+ "|ConsumerCount".toUpperCase(), new Long(
-								queueInfo.getFlowControlMaxBytes()).toString());
-				columnName2Value.put(queueInfo.getName()
-						+ "|PendingMessageCount".toUpperCase(), new Long(
-								queueInfo.getPendingMessageCount()).toString());
-				columnName2Value.put(queueInfo.getName()
-						+ "|FlowControlMaxBytes".toUpperCase(), new Long(
-								queueInfo.getFlowControlMaxBytes()).toString());
-				columnName2Value.put(
-						queueInfo.getName() + "|MaxMsgs".toUpperCase(),
-						new Long(queueInfo.getMaxMsgs()).toString());
-				columnName2Value.put(queueInfo.getName()
-						+ "|PendingMessageSize".toUpperCase(), new Long(
-								queueInfo.getPendingMessageSize()).toString());
-				columnName2Value.put(
-						queueInfo.getName() + "|ReceiverCount".toUpperCase(),
-						new Long(queueInfo.getReceiverCount()).toString());
-				columnName2Value.put(
-						queueInfo.getName() + "|MaxMsgs".toUpperCase(),
-						new Long(queueInfo.getMaxMsgs()).toString());
-				columnName2Value.put(
-						queueInfo.getName() + "|MaxBytes".toUpperCase(),
-						new Long(queueInfo.getMaxBytes()).toString());
+					columnName2Value.put(queueInfo.getName() + "|ConsumerCount",
+							new Integer(queueInfo.getConsumerCount()).toString());
+					columnName2Value.put(queueInfo.getName() + "|ReceiverCount",
+							new Long(queueInfo.getReceiverCount()).toString());
+					columnName2Value.put(queueInfo.getName()+ "|DeliveredMessageCount", 
+							new Long(queueInfo.getDeliveredMessageCount()).toString());
+					columnName2Value.put(queueInfo.getName()+ "|PendingMessageCount", 
+							new Long(queueInfo.getPendingMessageCount()).toString());
+					columnName2Value.put(queueInfo.getName()+ "|InTransitMessageCount", 
+							new Long(queueInfo.getInTransitMessageCount()).toString());
+					columnName2Value.put(queueInfo.getName()+ "|FlowControlMaxBytes", 
+							new Long(queueInfo.getFlowControlMaxBytes()).toString());
+					columnName2Value.put(queueInfo.getName()+ "|PendingMessageSize", 
+							new Long(queueInfo.getPendingMessageSize()).toString());
+					columnName2Value.put(queueInfo.getName() + "|MaxMsgs",
+							new Long(queueInfo.getMaxMsgs()).toString());
+					columnName2Value.put(queueInfo.getName() + "|MaxBytes",
+							new Long(queueInfo.getMaxBytes()).toString());
 
-				// Compare Pending Message Size against the Max Message Size.
-				if (debug) {
-					logger.debug("Queue Name " + queueInfo.getName());
-					logger.debug("Consumer Count "
-							+ queueInfo.getConsumerCount());
-					logger.debug("Delivered Message Count "
-							+ queueInfo.getDeliveredMessageCount());
-					logger.debug("Flow Control Max Bytes "
-							+ queueInfo.getFlowControlMaxBytes());
-					logger.debug("Pending Message Count "
-							+ queueInfo.getPendingMessageCount());
-					logger.debug("FlowControlMaxBytes"
-							+ queueInfo.getFlowControlMaxBytes());
-					logger.debug("MaxMessages " + queueInfo.getMaxMsgs());
-					logger.debug("ReceiverCount "
-							+ queueInfo.getReceiverCount());
+					StatData inboundStatData = queueInfo.getInboundStatistics();
+					if(inboundStatData != null){
+						columnName2Value.put(queueInfo.getName() + "|InboundByteRate",
+								new Long(inboundStatData.getByteRate()).toString());
+						columnName2Value.put(queueInfo.getName() + "|InboundMessageRate",
+								new Long(inboundStatData.getMessageRate()).toString());
+						columnName2Value.put(queueInfo.getName() + "|InboundByteCount",
+								new Long(inboundStatData.getTotalBytes()).toString());
+						columnName2Value.put(queueInfo.getName() + "|InboundMessageCount",
+								new Long(inboundStatData.getTotalMessages()).toString());
+					}
+
+					StatData outboundStatData = queueInfo.getOutboundStatistics();
+					if(outboundStatData != null){
+						columnName2Value.put(queueInfo.getName() + "|OutboundByteRate",
+								new Long(outboundStatData.getByteRate()).toString());
+						columnName2Value.put(queueInfo.getName() + "|OutboundMessageRate",
+								new Long(outboundStatData.getMessageRate()).toString());
+						columnName2Value.put(queueInfo.getName() + "|OutboundByteCount",
+								new Long(outboundStatData.getTotalBytes()).toString());
+						columnName2Value.put(queueInfo.getName() + "|OutboundMessageCount",
+								new Long(outboundStatData.getTotalMessages()).toString());
+					}
+
+
+					// Compare Pending Message Size against the Max Message Size.
+					if (debug) {
+						logger.debug("Queue Name " + queueInfo.getName());
+						logger.debug("Consumer Count "
+								+ queueInfo.getConsumerCount());
+						logger.debug("Delivered Message Count "
+								+ queueInfo.getDeliveredMessageCount());
+						logger.debug("Flow Control Max Bytes "
+								+ queueInfo.getFlowControlMaxBytes());
+						logger.debug("Pending Message Count "
+								+ queueInfo.getPendingMessageCount());
+						logger.debug("FlowControlMaxBytes"
+								+ queueInfo.getFlowControlMaxBytes());
+						logger.debug("MaxMessages " + queueInfo.getMaxMsgs());
+						logger.debug("ReceiverCount "
+								+ queueInfo.getReceiverCount());
+					}
 				}
 
 			}

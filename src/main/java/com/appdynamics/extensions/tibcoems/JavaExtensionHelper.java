@@ -17,7 +17,7 @@ import com.singularity.ee.agent.systemagent.api.TaskOutput;
 import com.singularity.ee.agent.systemagent.api.exception.TaskExecutionException;
 
 public abstract class JavaExtensionHelper extends AManagedMonitor {
-	protected final Logger logger = Logger.getLogger(this.getClass().getName());
+	public static final Logger logger = Logger.getLogger("com.singularity.extensions.TibcoEMSMonitor");
 
 	protected volatile String host;
 	protected volatile String port;
