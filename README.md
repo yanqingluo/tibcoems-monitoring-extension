@@ -33,8 +33,6 @@ tibjmsadmin.jar
 
 | Metric Name          | Description                                                           |
 | :------------------- | :-------------------------------------------------------------------- |
-| DiskReadRate         | Rate at which messages are being read from disk, in bytes per second  |
-| DiskWriteRate        | Rate at which messages are being written to disk, in bytes per second |
 | ConnectionCount      | Current number of connections                                         |
 | MaxConnections       | Maximum number of connections allowed by the server                   |
 | ProducerCount        | Total number of producers                                             |
