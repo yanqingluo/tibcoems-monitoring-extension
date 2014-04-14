@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="arbitary-sql-monitor" default="all">
+
+
+  <property file="build.properties"/>
+  <!-- Uncomment the following property if no tests compilation is needed -->
+  <!--
+  <property name="skip.tests" value="true"/>
+   -->
+
+  <!-- Compiler options -->
+
+  <property name="compiler.debug" value="on"/>
+  <property name="compiler.generate.no.warnings" value="off"/>
+  <property name="compiler.args" value=""/>
+  <property name="compiler.max.memory" value="128m"/>
+  <patternset id="ignored.files">
+    <exclude name="**/CVS/**"/>
+    <exclude name="**/SCCS/**"/>
+    <exclude name="**/RCS/**"/>
+    <exclude name="**/rcs/**"/>
+    <exclude name="**/.DS_Store/**"/>
+    <exclude name="**/.svn/**"/>
+    <exclude name="**/.pyc/**"/>
+    <exclude name="**/.pyo/**"/>
+    <exclude name="**/*.pyc/**"/>
+    <exclude name="**/*.pyo/**"/>
+    <exclude name="**/.git/**"/>
+    <exclude name="**/*.hprof/**"/>
+    <exclude name="**/_svn/**"/>
+    <exclude name="**/.hg/**"/>
+    <exclude name="**/*.lib/**"/>
+    <exclude name="**/*~/**"/>
+    <exclude name="**/__pycache__/**"/>
+    <exclude name="**/.bundle/**"/>
+    <exclude name="**/*.rbc/**"/>
+  </patternset>
+  <patternset id="library.patterns">
+    <include name="*.war"/>
+    <include name="*.ear"/>
+    <include name="*.apk"/>
+    <include name="*.zip"/>
+    <include name="*.swc"/>
+    <include name="*.ane"/>
+    <include name="*.egg"/>
+    <include name="*.jar"/>
+  </patternset>
+  <patternset id="compiler.resources">
+    <exclude name="**/?*.java"/>
+    <exclude name="**/?*.form"/>
+    <exclude name="**/?*.class"/>
+    <exclude name="**/?*.groovy"/>
+    <exclude name="**/?*.scala"/>
+    <exclude name="**/?*.flex"/>
+    <exclude name="**/?*.kt"/>
+    <exclude name="**/?*.clj"/>
+  </patternset>
+
+  <!-- JDK definitions -->
+
+  <property name="jdk.bin.1.6" value="${jdk.home.1.6}/bin"/>
+  <path id="jdk.classpath.1.6">
+    <fileset dir="${jdk.home.1.6}">
+      <include name="lib/deploy.jar"/>
+      <include name="lib/dt.jar"/>
+      <include name="lib/javaws.jar"/>
+      <include name="lib/jce.jar"/>
+      <include name="lib/jconsole.jar"/>
+      <include name="lib/management-agent.jar"/>
+      <include name="lib/plugin.jar"/>
+      <include name="lib/sa-jdi.jar"/>
+      <include name="../Classes/charsets.jar"/>
+      <include name="../Classes/classes.jar"/>
+      <include name="../Classes/jsse.jar"/>
+      <include name="../Classes/ui.jar"/>
+      <include name="lib/ext/apple_provider.jar"/>
+      <include name="lib/ext/dnsns.jar"/>
+      <include name="lib/ext/localedata.jar"/>
+      <include name="lib/ext/sunjce_provider.jar"/>
+      <include name="lib/ext/sunpkcs11.jar"/>
+    </fileset>
+  </path>
+
+  <property name="project.jdk.home" value="${jdk.home.1.6}"/>
+  <property name="project.jdk.bin" value="${jdk.bin.1.6}"/>
+  <property name="project.jdk.classpath" value="jdk.classpath.1.6"/>
+
+
+  <!-- Project Libraries -->
+
+  <path id="library.log4j.classpath">
+    <pathelement location="${basedir}/lib/log4j-1.2.15.jar"/>
+  </path>
+
+  <path id="library.tibcoems.classpath">
+    <pathelement location="${basedir}/lib/jms.jar"/>
+    <pathelement location="${basedir}/lib/slf4j-simple-1.4.2.jar"/>
+    <pathelement location="${basedir}/lib/slf4j-api-1.4.2.jar"/>
+    <pathelement location="${basedir}/lib/tibcrypt.jar"/>
+    <pathelement location="${basedir}/lib/tibemsd_sec.jar"/>
+    <pathelement location="${basedir}/lib/tibjms.jar"/>
+    <pathelement location="${basedir}/lib/tibjmsadmin.jar"/>
+    <pathelement location="${basedir}/lib/tibjmsapps.jar"/>
+    <pathelement location="${basedir}/lib/tibjmsufo.jar"/>
+    <pathelement location="${basedir}/lib/tibrvjms.jar"/>
+  </path>
+
+  <path id="library.machineagent.classpath">
+    <pathelement location="${basedir}/lib/machineagent.jar"/>
+  </path>
+
+
+  <!-- Global Libraries -->
+  <!-- Register Custom Compiler Taskdefs -->
+  <property name="javac2.home" value="${idea.home}/lib"/>
+  <path id="javac2.classpath">
+    <pathelement location="${javac2.home}/javac2.jar"/>
+    <pathelement location="${javac2.home}/jdom.jar"/>
+    <pathelement location="${javac2.home}/asm4-all.jar"/>
+    <pathelement location="${javac2.home}/jgoodies-forms.jar"/>
+  </path>
+  <target name="register.custom.compilers">
+    <taskdef name="javac2" classname="com.intellij.ant.Javac2" classpathref="javac2.classpath"/>
+    <taskdef name="instrumentIdeaExtensions" classname="com.intellij.ant.InstrumentIdeaExtensions"
+             classpathref="javac2.classpath"/>
+  </target>
+
+  <!-- Modules -->
+
+
+  <!-- Module tibcoemsmonitor -->
+
+  <dirname property="module.tibcoemsmonitor.basedir" file="${ant.file}"/>
+
+
+  <property name="module.jdk.home.tibcoemsmonitor" value="${project.jdk.home}"/>
+  <property name="module.jdk.bin.tibcoemsmonitor" value="${project.jdk.bin}"/>
+  <property name="module.jdk.classpath.tibcoemsmonitor" value="${project.jdk.classpath}"/>
+
+  <property name="compiler.args.tibcoemsmonitor" value="${compiler.args}"/>
+
+  <property name="tibcoemsmonitor.build.dir" value="${basedir}/build"/>
+  <property name="tibcoemsmonitor.dist.dir" value="${module.tibcoemsmonitor.basedir}/dist"/>
+  <property name="tibcoemsmonitor.testoutput.dir" value="${module.tibcoemsmonitor.basedir}/out/test/tibcoemsmonitor"/>
+  <property name="tibcoemsmonitor.jar.name" value="TibcoEMSMonitor.jar"/>
+  <property name="tibcoemsmonitor.jar.path" value="${tibcoemsmonitor.dist.dir}/${tibcoemsmonitor.jar.name}"/>
+  <property name="tibcoemsmonitor.folder.path" value="${tibcoemsmonitor.dist.dir}/tibcoemsmonitor"/>
+  <property name="tibcoemsmonitor.zip.name" value="TibcoEMSMonitor-${tibcoemsmonitor.version}.zip"/>
+  <property name="tibcoemsmonitor.zip.path" value="${tibcoemsmonitor.dist.dir}/${tibcoemsmonitor.zip.name}"/>
+
+  <path id="tibcoemsmonitor.module.bootclasspath">
+    <!-- Paths to be included in compilation bootclasspath -->
+  </path>
+
+  <path id="tibcoemsmonitor.module.production.classpath">
+    <path refid="${module.jdk.classpath.tibcoemsmonitor}"/>
+    <path refid="library.machineagent.classpath"/>
+    <path refid="library.log4j.classpath"/>
+    <path refid="library.tibcoems.classpath"/>
+  </path>
+
+  <path id="tibcoemsmonitor.runtime.production.module.classpath">
+    <pathelement location="${tibcoemsmonitor.dist.dir}"/>
+    <path refid="library.machineagent.classpath"/>
+    <path refid="library.log4j.classpath"/>
+    <path refid="library.tibcoems.classpath"/>
+  </path>
+
+  <path id="tibcoemsmonitor.module.classpath">
+    <path refid="${module.jdk.classpath.tibcoemsmonitor}"/>
+    <pathelement location="${tibcoemsmonitor.dist.dir}"/>
+    <path refid="library.machineagent.classpath"/>
+    <path refid="library.log4j.classpath"/>
+    <path refid="library.tibcoems.classpath"/>
+  </path>
+
+  <path id="tibcoemsmonitor.runtime.module.classpath">
+    <pathelement location="${tibcoemsmonitor.testoutput.dir}"/>
+    <pathelement location="${tibcoemsmonitor.dist.dir}"/>
+    <path refid="library.machineagent.classpath"/>
+    <path refid="library.log4j.classpath"/>
+    <path refid="library.tibcoems.classpath"/>
+  </path>
+
+
+  <patternset id="excluded.from.module.tibcoemsmonitor">
+    <patternset refid="ignored.files"/>
+  </patternset>
+
+  <patternset id="excluded.from.compilation.tibcoemsmonitor">
+    <patternset refid="excluded.from.module.tibcoemsmonitor"/>
+  </patternset>
+
+  <path id="tibcoemsmonitor.module.sourcepath">
+    <dirset dir="${module.tibcoemsmonitor.basedir}">
+      <include name="src"/>
+    </dirset>
+  </path>
+
+
+  <target name="compile.module.tibcoemsmonitor"
+          depends="compile.module.tibcoemsmonitor.production,compile.module.tibcoemsmonitor.tests"
+          description="Compile module tibcoemsmonitor"/>
+
+  <target name="compile.module.tibcoemsmonitor.production" depends="register.custom.compilers"
+          description="Compile module tibcoemsmonitor; production classes">
+    <mkdir dir="${tibcoemsmonitor.build.dir}"/>
+    <javac2 destdir="${tibcoemsmonitor.build.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}"
+            memorymaximumsize="${compiler.max.memory}" fork="true" executable="${module.jdk.bin.tibcoemsmonitor}/javac">
+      <compilerarg line="${compiler.args.tibcoemsmonitor}"/>
+      <bootclasspath refid="tibcoemsmonitor.module.bootclasspath"/>
+      <classpath refid="tibcoemsmonitor.module.production.classpath"/>
+      <src refid="tibcoemsmonitor.module.sourcepath"/>
+      <patternset refid="excluded.from.compilation.tibcoemsmonitor"/>
+    </javac2>
+
+    <copy todir="${tibcoemsmonitor.build.dir}">
+      <fileset dir="${module.tibcoemsmonitor.basedir}/src">
+        <patternset refid="compiler.resources"/>
+        <type type="file"/>
+      </fileset>
+    </copy>
+  </target>
+
+  <target name="compile.module.tibcoemsmonitor.tests"
+          depends="register.custom.compilers,compile.module.tibcoemsmonitor.production"
+          description="compile module tibcoemsmonitor; test classes" unless="skip.tests"/>
+
+  <target name="clean.module.tibcoemsmonitor" description="cleanup module">
+    <delete dir="${tibcoemsmonitor.dist.dir}"/>
+    <delete dir="${tibcoemsmonitor.testoutput.dir}"/>
+  </target>
+
+  <target name="init" description="Build initialization">
+    <!-- Perform any build initialization in this target -->
+  </target>
+
+  <target name="clean" depends="clean.module.tibcoemsmonitor" description="cleanup all"/>
+
+  <target name="build.modules" depends="init, clean, compile.module.tibcoemsmonitor"
+          description="build all modules"/>
+
+  <target name="init.artifacts">
+    <mkdir dir="${tibcoemsmonitor.build.dir}"/>
+    <mkdir dir="${tibcoemsmonitor.dist.dir}"/>
+  </target>
+
+  <target name="artifact.dist_folder" depends="init.artifacts, artifact.dist_jar"
+          description="Build monitor folder for distribution or debugging">
+    <delete dir="${tibcoemsmonitor.folder.path}" failonerror="false"/>
+    <mkdir dir="${tibcoemsmonitor.folder.path}"/>
+    <mkdir dir="${tibcoemsmonitor.folder.path}/lib"/>
+    <copy file="${basedir}/conf/monitor.xml" todir="${tibcoemsmonitor.folder.path}"/>
+    <copy file="${basedir}/README.md" todir="${tibcoemsmonitor.folder.path}"/>
+    <copy file="${tibcoemsmonitor.jar.path}" todir="${tibcoemsmonitor.folder.path}"/>
+    <copy file="${basedir}/lib/log4j-1.2.15.jar" todir="${tibcoemsmonitor.folder.path}/lib"/>
+    <copy file="${basedir}/lib/jms.jar" todir="${tibcoemsmonitor.folder.path}/lib"/>
+    <copy file="${basedir}/lib/slf4j-api-1.4.2.jar" todir="${tibcoemsmonitor.folder.path}/lib"/>
+    <copy file="${basedir}/lib/slf4j-simple-1.4.2.jar" todir="${tibcoemsmonitor.folder.path}/lib"/>
+    <copy file="${basedir}/lib/tibcrypt.jar" todir="${tibcoemsmonitor.folder.path}/lib"/>
+    <copy file="${basedir}/lib/tibemsd_sec.jar" todir="${tibcoemsmonitor.folder.path}/lib"/>
+    <copy file="${basedir}/lib/tibjms.jar" todir="${tibcoemsmonitor.folder.path}/lib"/>
+    <copy file="${basedir}/lib/tibjmsadmin.jar" todir="${tibcoemsmonitor.folder.path}/lib"/>
+    <copy file="${basedir}/lib/tibjmsapps.jar" todir="${tibcoemsmonitor.folder.path}/lib"/>
+    <copy file="${basedir}/lib/tibjmsufo.jar" todir="${tibcoemsmonitor.folder.path}/lib"/>
+    <copy file="${basedir}/lib/tibrvjms.jar" todir="${tibcoemsmonitor.folder.path}/lib"/>
+  </target>
+
+  <target name="artifact.dist_jar" depends="init.artifacts, compile.module.tibcoemsmonitor"
+          description="Build jar file for distribution">
+    <delete file="${tibcoemsmonitor.jar.path}" failonerror="false"/>
+    <jar destfile="${tibcoemsmonitor.jar.path}" duplicate="preserve" filesetmanifest="mergewithoutmain">
+      <zipfileset dir="${tibcoemsmonitor.build.dir}"/>
+      <zipfileset file="${basedir}/META-INF/MANIFEST.MF" prefix="META-INF"/>
+    </jar>
+  </target>
+
+  <target name="artifact.dist_zip" depends="init.artifacts, artifact.dist_folder"
+          description="Build zip file for distribution">
+    <zip destfile="${tibcoemsmonitor.zip.path}">
+      <zipfileset dir="${tibcoemsmonitor.folder.path}"/>
+    </zip>
+  </target>
+
+  <target name="build.all.artifacts" depends="artifact.dist_jar, artifact.dist_folder, artifact.dist_zip"
+          description="Build all artifacts">
+  </target>
+
+  <target name="all" depends="build.modules, build.all.artifacts" description="build all"/>
+</project>
