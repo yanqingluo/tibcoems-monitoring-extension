@@ -205,7 +205,7 @@
   <target name="compile.module.tibcoemsmonitor.production" depends="register.custom.compilers"
           description="Compile tibco module; production classes">
     <mkdir dir="${tibcoemsmonitor.build.dir}"/>
-    <javac2 destdir="${tibcoemsmonitor.build.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}" source="1.5" target="1.5"
+    <javac2 destdir="${tibcoemsmonitor.build.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}"
             memorymaximumsize="${compiler.max.memory}" fork="true" executable="${module.jdk.bin.tibcoemsmonitor}/javac">
       <compilerarg line="${compiler.args.tibcoemsmonitor}"/>
       <bootclasspath refid="tibcoemsmonitor.module.bootclasspath"/>
