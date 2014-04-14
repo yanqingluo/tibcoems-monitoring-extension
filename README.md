@@ -3,16 +3,22 @@ TibcoEMSMonitor
 
 ## Introduction
 
-An AppDynamics Machine Agent add-on to report metrics from a [Tibco EMS server][] and its queues.
+An AppDynamics Machine Agent add-on to report metrics from a [Tibco EMS
+Server][] and its queues.
 
-Tibco EMS is messaging middleware that provides persistent queues as well as a publish/subscribe mechanism. It can be used as a JMS provider, or it can be used directly via native API's.
+Tibco EMS is messaging middleware that provides persistent queues as well as
+a publish/subscribe mechanism. It can be used as a JMS provider, or it can be
+used directly via native API's.
 
-This eXtension requires the Java Machine Agent.
+This extension requires the Java Machine Agent.
 
 
 ## Prerequisites
 
-Before starting this monitor, make sure your EMS server is configured to report statistics. You can do this by editing the file `tibemsd.conf` in your `TIBCO_HOME`, or by using the `tibemsadmin` command line utility.
+Before starting this monitor, make sure your EMS server is configured to report
+statistics. You can do this by editing the file `tibemsd.conf` in your
+`TIBCO_HOME`, or by using the `tibemsadmin` command line utility.
+
 
 #### Configuring statistics by editing tibemsd.conf
 
@@ -21,6 +27,7 @@ Before starting this monitor, make sure your EMS server is configured to report 
         statistics = enabled
 
 1. Restart Tibco EMS.
+
 
 #### Configuring statistics using the command line
 
@@ -46,39 +53,53 @@ Use the `tibemsadmin` utility to change the server configuration.
 
 ## Installation
 
-1. Download TibcoEMSMonitor.zip from AppSphere.
-1. Copy TibcoEMSMonitor.zip into the directory where you installed the machine agent, under `$AGENT_HOME/monitors`.
-1. Unzip the file. This will create a new directory called `TibcoEMSMonitor`.
-1. In `$AGENT_HOME/monitors/TibcoEMSMonitor`, edit the file `monitor.xml` and configure the plugin for your Tibco EMS installation.
-1. Restart the machine agent.
+1. Download TibcoEMSMonitor.zip from the Community.
+2. Copy TibcoEMSMonitor.zip into the directory where you installed the
+   machine agent, under `$AGENT_HOME/monitors`.
+3. Unzip the file. This will create a new directory called `TibcoEMSMonitor`.
+4. In `$AGENT_HOME/monitors/TibcoEMSMonitor`, edit the file `monitor.xml` and
+   configure the extension for your Tibco EMS installation.
+5. Restart the machine agent.
+
 
 ## Configuration
 
-Configuration for this monitor is in the `monitor.xml` file in the monitor directory. All of the configurable options are in the `<task-arguments>` section.
+Configuration for this monitor is in the `monitor.xml` file in the monitor
+directory. All of the configurable options are in the `<task-arguments>`
+section.
 
 hostname
 : Name or IP address of the Tibco EMS server. Required.
 
 port
-: TCP port number where the Tibco server is listening. The default value is 7222. Required.
+: TCP port number where the Tibco server is listening. The default value is
+  7222. Required.
 
 userid
-: Administrative user ID for the Tibco admin interface. The default value is "admin". Required.
+: Administrative user ID for the Tibco admin interface. The default value is
+  "admin". Required.
 
 password
-: Password for the administrative user ID. The default value is an empty password. Required.
+: Password for the administrative user ID. The default value is an empty
+  password. Required.
 
 tier
-: Name of the tier in AppDynamics for which the monitor should register its metrics. If not specified, the metrics will be registered on all tiers. Optional.
+: Name of the tier in AppDynamics for which the monitor should register its
+  metrics. If not specified, the metrics will be registered on all tiers.
+  Optional.
 
 emsservername
-: An additional folder to create under the "Custom Metrics" folder. Optional.
+: An additional folder to create under the "Custom Metrics" folder.
+  Optional.
 
 showTempQueues
-: If set to true, the monitor will report metrics on temporary queues (defined as any queue whose name starts with `$TMP$.`). **NOTE:** Enabling this option can potentially cause the agent to overflow its metric limit.
+: If set to true, the monitor will report metrics on temporary queues (defined
+  as any queue whose name starts with `$TMP$.`). **NOTE:** Enabling this option
+  can potentially cause the agent to overflow its metric limit.
 
 showSysQueues
-: If set to true, the monitor will report metrics on system queues (defined as any queue whose name starts with `$sys.`).
+: If set to true, the monitor will report metrics on system queues (defined as
+  any queue whose name starts with `$sys.`).
 
 
 
@@ -130,20 +151,23 @@ showSysQueues
 
 ## Caution
 
-This monitor can potentially register hundred of new metrics, depending on how many queues are in EMS. By default, the Machine Agent will only report 200 metrics to the controller, so you may need to increase that limit when installing this monitor. To increase the metric limit, you must add a parameter when starting the Machine Agent, like this:
+This monitor can potentially register hundred of new metrics, depending on how
+many queues are in EMS. By default, the Machine Agent will only report 200
+metrics to the controller, so you may need to increase that limit when
+installing this monitor. To increase the metric limit, you must add a parameter
+when starting the Machine Agent, like this:
 
-```bash
-java -Dappdynamics.agent.maxMetrics=1000 -jar machineagent.jar
-```
+    java -Dappdynamics.agent.maxMetrics=1000 -jar machineagent.jar
 
 Please note that the maximum value you can provide is 5000.
 
 
 ## Support
 
-For any questions or feature requests, please contact the [AppDynamics Center of Excellence][].
+For any questions or feature requests, please contact the [AppDynamics Center
+of Excellence][].
 
-**Version:** 2.1.1  
+**Version:** 2.2.0
 **Controller Compatibility:** 3.6 or later  
 **Last Updated:** 11/17/2013  
 **Author:** Todd Radel  
@@ -152,10 +176,9 @@ For any questions or feature requests, please contact the [AppDynamics Center of
 
 ## Release Notes
 
-### Version 2.1.1
-- Added inbound and outbound message/byte count and rate for each queue.
-- General code cleanup.
-- Re-released to AppSphere.
+### Version 2.2.0
+- Cleaned up directory structure.
+- Rebuilt Ant scripts.
 
 [Tibco EMS server]: http://www.tibco.com/products/automation/messaging/enterprise-messaging/enterprise-message-service/default.jsp
 [AppDynamics Center of Excellence]: mailto:ace-request@appdynamics.com

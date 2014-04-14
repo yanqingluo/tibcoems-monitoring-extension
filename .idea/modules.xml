@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/TibcoEMSMonitor.iml" filepath="$PROJECT_DIR$/TibcoEMSMonitor.iml" />
+      <module fileurl="file://$PROJECT_DIR$/tibco-monitoring-extension.iml" filepath="$PROJECT_DIR$/tibco-monitoring-extension.iml" />
     </modules>
   </component>
 </project>

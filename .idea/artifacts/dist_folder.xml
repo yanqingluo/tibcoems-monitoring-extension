@@ -1,0 +1,13 @@
+<component name="ArtifactManager">
+  <artifact name="dist_folder">
+    <output-path>$PROJECT_DIR$/dist_TibcoEMSMonitor</output-path>
+    <root id="root">
+      <element id="directory" name="lib">
+        <element id="library" level="project" name="tibcolibs" />
+        <element id="library" level="project" name="log4j" />
+      </element>
+      <element id="file-copy" path="$PROJECT_DIR$/conf/monitor.xml" />
+      <element id="artifact" artifact-name="dist_jar" />
+    </root>
+  </artifact>
+</component>
