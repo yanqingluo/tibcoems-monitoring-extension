@@ -203,9 +203,9 @@
           description="Compile module tibcoemsmonitor"/>
 
   <target name="compile.module.tibcoemsmonitor.production" depends="register.custom.compilers"
-          description="Compile module tibcoemsmonitor; production classes">
+          description="Compile tibco module; production classes">
     <mkdir dir="${tibcoemsmonitor.build.dir}"/>
-    <javac2 destdir="${tibcoemsmonitor.build.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}"
+    <javac2 destdir="${tibcoemsmonitor.build.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}" source="1.5" target="1.5"
             memorymaximumsize="${compiler.max.memory}" fork="true" executable="${module.jdk.bin.tibcoemsmonitor}/javac">
       <compilerarg line="${compiler.args.tibcoemsmonitor}"/>
       <bootclasspath refid="tibcoemsmonitor.module.bootclasspath"/>
@@ -224,9 +224,9 @@
 
   <target name="compile.module.tibcoemsmonitor.tests"
           depends="register.custom.compilers,compile.module.tibcoemsmonitor.production"
-          description="compile module tibcoemsmonitor; test classes" unless="skip.tests"/>
+          description="compile tibco module; test classes" unless="skip.tests"/>
 
-  <target name="clean.module.tibcoemsmonitor" description="cleanup module">
+  <target name="clean.module.tibcoemsmonitor" description="clean up tibco module">
     <delete dir="${tibcoemsmonitor.dist.dir}"/>
     <delete dir="${tibcoemsmonitor.testoutput.dir}"/>
   </target>
@@ -235,17 +235,21 @@
     <!-- Perform any build initialization in this target -->
   </target>
 
-  <target name="clean" depends="clean.module.tibcoemsmonitor" description="cleanup all"/>
+  <target name="clean" depends="clean.module.tibcoemsmonitor"
+          description="clean up all modules"/>
 
   <target name="build.modules" depends="init, clean, compile.module.tibcoemsmonitor"
           description="build all modules"/>
+
+  <target name="compile" depends="compile.module.tibcoemsmonitor"
+          description="compile all modules" />
 
   <target name="init.artifacts">
     <mkdir dir="${tibcoemsmonitor.build.dir}"/>
     <mkdir dir="${tibcoemsmonitor.dist.dir}"/>
   </target>
 
-  <target name="artifact.dist_folder" depends="init.artifacts, artifact.dist_jar"
+  <target name="dist_folder" depends="init.artifacts, dist_jar"
           description="Build monitor folder for distribution or debugging">
     <delete dir="${tibcoemsmonitor.folder.path}" failonerror="false"/>
     <mkdir dir="${tibcoemsmonitor.folder.path}"/>
@@ -266,25 +270,25 @@
     <copy file="${basedir}/lib/tibrvjms.jar" todir="${tibcoemsmonitor.folder.path}/lib"/>
   </target>
 
-  <target name="artifact.dist_jar" depends="init.artifacts, compile.module.tibcoemsmonitor"
+  <target name="dist_jar" depends="init.artifacts, compile.module.tibcoemsmonitor"
           description="Build jar file for distribution">
     <delete file="${tibcoemsmonitor.jar.path}" failonerror="false"/>
     <jar destfile="${tibcoemsmonitor.jar.path}" duplicate="preserve" filesetmanifest="mergewithoutmain">
       <zipfileset dir="${tibcoemsmonitor.build.dir}"/>
-      <zipfileset file="${basedir}/META-INF/MANIFEST.MF" prefix="META-INF"/>
+      <zipfileset file="${basedir}/src/META-INF/MANIFEST.MF" prefix="META-INF"/>
     </jar>
   </target>
 
-  <target name="artifact.dist_zip" depends="init.artifacts, artifact.dist_folder"
+  <target name="dist_zip" depends="init.artifacts, dist_folder"
           description="Build zip file for distribution">
     <zip destfile="${tibcoemsmonitor.zip.path}">
       <zipfileset dir="${tibcoemsmonitor.folder.path}"/>
     </zip>
   </target>
 
-  <target name="build.all.artifacts" depends="artifact.dist_jar, artifact.dist_folder, artifact.dist_zip"
+  <target name="dist" depends="dist_jar, dist_folder, dist_zip"
           description="Build all artifacts">
   </target>
 
-  <target name="all" depends="build.modules, build.all.artifacts" description="build all"/>
+  <target name="all" depends="build.modules, dist" description="build all"/>
 </project>

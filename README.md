@@ -1,3 +1,4 @@
+
 TibcoEMSMonitor
 ===============
 
@@ -167,19 +168,22 @@ Please note that the maximum value you can provide is 5000.
 For any questions or feature requests, please contact the [AppDynamics Center
 of Excellence][].
 
-**Version:** 2.2.0  
+**Version:** 2.2.1
 **Controller Compatibility:** 3.6 or later  
-**Last Updated:** 11/17/2013  
+**Last Updated:** 22-May-2014
 **Author:** Todd Radel  
 
 ------------------------------------------------------------------------------
 
 ## Release Notes
 
-### Version 2.2.0
-- Cleaned up directory structure.
-- Rebuilt Ant scripts.
+### Version 2.2.1
+  - Recompiled for target JDK 1.5
 
-[Tibco EMS server]: http://www.tibco.com/products/automation/messaging/enterprise-messaging/enterprise-message-service/default.jsp
+### Version 2.2.0
+  - Cleaned up directory structure.
+  - Rebuilt Ant scripts.
+
+[Tibco EMS Server]: http://www.tibco.com/products/automation/messaging/enterprise-messaging/enterprise-message-service/default.jsp
 [AppDynamics Center of Excellence]: mailto:ace-request@appdynamics.com
 [help@appdynamics.com]: mailto:help@appdynamics.com
