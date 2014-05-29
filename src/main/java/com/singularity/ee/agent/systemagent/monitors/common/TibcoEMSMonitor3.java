@@ -55,7 +55,7 @@ public class TibcoEMSMonitor3 extends JavaServersMonitor {
 		showTempQueues = Boolean.valueOf(showTempQueuesStr);
 		showSysQueues = Boolean.valueOf(showSysQueuesStr);
 
-		
+
 
 		// Assume all the columns we want values for are in a comma separated
 		// list
@@ -94,7 +94,7 @@ public class TibcoEMSMonitor3 extends JavaServersMonitor {
 
 		logger.debug("Connecting to tcp://" + hostname + ":" + port + " " +  userid + " " + password);
 		TibjmsAdmin tibcoAdmin = new TibjmsAdmin("tcp://" + hostname + ":" + port, userid, password);
-		
+
 		return tibcoAdmin;
 	}
 
@@ -113,13 +113,9 @@ public class TibcoEMSMonitor3 extends JavaServersMonitor {
 		TibjmsAdmin conn = null;
 		boolean debug = logger.isDebugEnabled();
 		try {
-			if (conn == null) 
-			{
-                if (debug) {
-                    logger.debug("Connecting to " + conn.getInfo());
-                }
+            if (conn == null) {
                 conn = connect();
-			}
+            }
 
 			ServerInfo serverInfo = conn.getInfo();
 //			serverInfo.getAsyncDBSize();
@@ -164,11 +160,11 @@ public class TibcoEMSMonitor3 extends JavaServersMonitor {
 						logger.debug("Producing Information is Greater than ZERO");
 					}
 				}
-				
+
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-			
+
 			try {
 				queueInfos = conn.getQueuesStatistics();
 				if (debug) {
@@ -185,7 +181,7 @@ public class TibcoEMSMonitor3 extends JavaServersMonitor {
                 logger.warn("Unable to get queue statistics");
 			} else
 			{
-			
+
 				for (int i = 0; i < queueInfos.length; i++) {
 					QueueInfo queueInfo = queueInfos[i];
                     String queueName = queueInfo.getName();
@@ -246,9 +242,9 @@ public class TibcoEMSMonitor3 extends JavaServersMonitor {
 	}
 
 	public TaskOutput execute(Map<String, String> taskArguments,TaskExecutionContext taskContext) throws TaskExecutionException {
-		
+
 		logger.debug("Starting Execute Thread: " + taskArguments + " : " + taskContext);
-		
+
 		startExecute(taskArguments, taskContext);
         try {
         	Thread.sleep(5000);
