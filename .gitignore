@@ -1,1 +1,5 @@
-.idea build dist tmp temp
+*.class
+build/
+dist/
+tmp/
+temp/
