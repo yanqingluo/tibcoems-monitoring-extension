@@ -4,27 +4,25 @@ import com.singularity.ee.agent.systemagent.api.MetricWriter;
 import com.singularity.ee.agent.systemagent.api.TaskExecutionContext;
 import com.singularity.ee.agent.systemagent.api.TaskOutput;
 import com.singularity.ee.agent.systemagent.api.exception.TaskExecutionException;
-import com.singularity.ee.util.clock.ClockUtils;
 import com.tibco.tibjms.admin.*;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class TibcoEMSMonitor3 extends JavaServersMonitor
 {
-    private volatile String tierName;
-    private volatile String serverName;
-    private volatile int refreshIntervalInExecutionTicks;
-    private volatile int currentNumExecutionTicks = -1;
-    private volatile String userid;
-    private volatile String password;
-    private volatile String hostname;
-    private volatile String port;
-    private volatile String protocol;
-    private volatile Boolean showTempQueues = false;
-    private volatile Boolean showSysQueues = false;
+    private String tierName;
+    private String serverName;
+    private String username;
+    private String password;
+    private String hostname;
+    private String port;
+    private String protocol;
+    private List<Pattern> queuePatternsToExclude;
+    private boolean showTempQueues = false;
+    private boolean showSysQueues = false;
+
 
     public TibcoEMSMonitor3()
     {
@@ -35,11 +33,11 @@ public class TibcoEMSMonitor3 extends JavaServersMonitor
     protected void parseArgs(Map<String, String> args)
     {
         super.parseArgs(args);
-        tierName = getArg(args, "tier", "Tibco EMS Server"); // if the tier is not specified
-        // then create the metrics for
-        // all tiers
-        serverName = getArg(args, "emsservername", null);
-        userid = getArg(args, "userid", "admin");
+
+        // if the tier is not specified, then create the metrics for all tiers
+        tierName = getArg(args, "tier", "Tibco EMS Server");
+        serverName = getArg(args, "emsServerName", null);
+        username = getArg(args, "username", "admin");
         password = getArg(args, "password", "admin");
         hostname = getArg(args, "hostname", "localhost");
         port = getArg(args, "port", "7222");
@@ -47,129 +45,141 @@ public class TibcoEMSMonitor3 extends JavaServersMonitor
         showTempQueues = Boolean.valueOf(getArg(args, "showTempQueues", "false"));
         showSysQueues = Boolean.valueOf(getArg(args, "showSysQueues", "false"));
 
-        int refreshIntervalSecs = Integer.parseInt(getArg(args, "refresh-interval", "60"));
-
-        if (refreshIntervalSecs <= 60)
+        String[] queuesToExclude = getArg(args, "queuesToExclude", "").trim().split("\\s+");
+        queuePatternsToExclude = new ArrayList<Pattern>();
+        for (String pattern : queuesToExclude)
         {
-            refreshIntervalInExecutionTicks = 1;
-        }
-        else
-        {
-            // Convert refresh interval to milliseconds and round up to the
-            // nearest minute timeslice.
-            // From that we can get the number of 60 second ticks before the
-            // next refresh.
-            // We do this to prevent time drift issues from preventing this task
-            // from running.
-            refreshIntervalInExecutionTicks = (int) (ClockUtils
-                    .roundUpTimestampToNextMinute(refreshIntervalSecs * 1000) / 60000);
-        }
-
-        if (currentNumExecutionTicks == -1)
-        {
-            // This is the first time we've parsed the args. Assume we refresh
-            // the data
-            // the next time we execute the monitor.
-            currentNumExecutionTicks = refreshIntervalInExecutionTicks;
+            queuePatternsToExclude.add(Pattern.compile(pattern));
         }
     }
 
     private TibjmsAdmin connect() throws TibjmsAdminException
     {
-
         String connectionUrl = String.format("%s://%s:%s", protocol, hostname, port);
 
-        logger.debug(String.format("Connecting to %s as %s", connectionUrl, userid));
-        return new TibjmsAdmin(connectionUrl, userid, password);
+        logger.debug(String.format("Connecting to %s as %s", connectionUrl, username));
+        return new TibjmsAdmin(connectionUrl, username, password);
     }
 
-    private void putServerValue(Map<String, String> valueMap, String key, long value)
+    private void putServerValue(String key, long value)
     {
         valueMap.put(key, Long.toString(value));
     }
 
-    private void putQueueValue(Map<String, String> valueMap, String queueName, String key, long value)
+    private void putServerInfo(ServerInfo serverInfo)
+    {
+        putServerValue("DiskReadRate", serverInfo.getDiskReadRate());
+        putServerValue("DiskWriteRate", serverInfo.getDiskWriteRate());
+
+        putServerValue("InboundBytesRate", serverInfo.getInboundBytesRate());
+        putServerValue("InboundMessageRate", serverInfo.getInboundMessageRate());
+        putServerValue("OutboundBytesRate", serverInfo.getOutboundBytesRate());
+        putServerValue("OutboundMessageRate", serverInfo.getOutboundMessageRate());
+
+        putServerValue("ConnectionCount", serverInfo.getConnectionCount());
+        putServerValue("MaxConnections", serverInfo.getMaxConnections());
+
+        putServerValue("ProducerCount", serverInfo.getProducerCount());
+        putServerValue("ConsumerCount", serverInfo.getConsumerCount());
+
+        putServerValue("PendingMessageCount", serverInfo.getPendingMessageCount());
+        putServerValue("PendingMessageSize", serverInfo.getPendingMessageSize());
+        putServerValue("InboundMessageCount", serverInfo.getInboundMessageCount());
+        putServerValue("OutboundMessageCount", serverInfo.getOutboundMessageCount());
+
+        putServerValue("InboundMessagesPerMinute", getDeltaValue("InboundMessageCount"));
+        putServerValue("OutboundMessagesPerMinute", getDeltaValue("OutboundMessageCount"));
+    }
+
+    private void putQueueValue(String queueName, String key, long value)
     {
         valueMap.put(queueName + "|" + key, Long.toString(value));
     }
 
-    // collects all monitoring data for this time period from database
-    private Map<String, String> putValuesIntoMap() throws Exception
+    private void putQueueInfo(QueueInfo queueInfo)
     {
-        Map<String, String> map = new HashMap<String, String>();
+        String queueName = queueInfo.getName();
 
-        TibjmsAdmin conn = null;
-        boolean debug = logger.isDebugEnabled();
-        try
+        putQueueValue(queueName, "ConsumerCount", queueInfo.getConsumerCount());
+        putQueueValue(queueName, "InTransitCount", queueInfo.getInTransitMessageCount());
+        putQueueValue(queueName, "PendingMessageCount", queueInfo.getPendingMessageCount());
+        putQueueValue(queueName, "FlowControlMaxBytes", queueInfo.getFlowControlMaxBytes());
+        putQueueValue(queueName, "MaxMsgs", queueInfo.getMaxMsgs());
+        putQueueValue(queueName, "PendingMessageSize", queueInfo.getPendingMessageSize());
+        putQueueValue(queueName, "ReceiverCount", queueInfo.getReceiverCount());
+        putQueueValue(queueName, "MaxMsgs", queueInfo.getMaxMsgs());
+        putQueueValue(queueName, "MaxBytes", queueInfo.getMaxBytes());
+
+        // Inbound metrics
+        StatData inboundData = queueInfo.getInboundStatistics();
+        putQueueValue(queueName, "InboundByteRate", inboundData.getByteRate());
+        putQueueValue(queueName, "InboundMessageRate", inboundData.getMessageRate());
+        putQueueValue(queueName, "InboundByteCount", inboundData.getTotalBytes());
+        putQueueValue(queueName, "InboundMessageCount", inboundData.getTotalMessages());
+
+        // Outbound metrics
+        StatData outboundData = queueInfo.getOutboundStatistics();
+        putQueueValue(queueName, "OutboundByteRate", outboundData.getByteRate());
+        putQueueValue(queueName, "OutboundMessageRate", outboundData.getMessageRate());
+        putQueueValue(queueName, "OutboundByteCount", outboundData.getTotalBytes());
+        putQueueValue(queueName, "OutboundMessageCount", outboundData.getTotalMessages());
+
+        putQueueValue(queueName, "InboundMessagesPerMinute", getDeltaValue(queueName + "|InboundMessageCount"));
+        putQueueValue(queueName, "OutboundMessagesPerMinute", getDeltaValue(queueName + "|OutboundMessageCount"));
+        putQueueValue(queueName, "InboundBytesPerMinute", getDeltaValue(queueName + "|InboundByteCount"));
+        putQueueValue(queueName, "OutboundBytesPerMinute", getDeltaValue(queueName + "|OutboundByteCount"));
+    }
+
+    private boolean shouldMonitorQueue(QueueInfo queueInfo)
+    {
+        String queueName = queueInfo.getName();
+
+        if (queueName.startsWith("$TMP$.") && !showTempQueues)
         {
-            if (conn == null)
+            logger.info("Skipping temporary queue '" + queueName + "'");
+            return false;
+        }
+        else if (queueName.startsWith("$sys.") && !showSysQueues)
+        {
+            logger.info("Skipping system queue '" + queueName + "'");
+            return false;
+        }
+        else
+        {
+            for (Pattern patternToExclude : queuePatternsToExclude)
             {
-                conn = connect();
+                Matcher matcher = patternToExclude.matcher(queueName);
+                if (matcher.matches()) {
+                    logger.info(String.format("Skipping queue '%s' due to pattern '%s' in queuesToExclude",
+                            queueName, patternToExclude.pattern()));
+                    return false;
+                }
             }
 
+            return true;
+        }
+    }
+
+    // collects all monitoring data for this time period
+    private void putValuesIntoMap() throws Exception
+    {
+        TibjmsAdmin conn = null;
+
+        try
+        {
+            conn = connect();
+
             ServerInfo serverInfo = conn.getInfo();
-
-            putServerValue(map, "DiskReadRate", serverInfo.getDiskReadRate());
-            putServerValue(map, "DiskWriteRate", serverInfo.getDiskWriteRate());
-
-            putServerValue(map, "InboundBytesRate", serverInfo.getInboundBytesRate());
-            putServerValue(map, "InboundMessageRate", serverInfo.getInboundMessageRate());
-            putServerValue(map, "OutboundBytesRate", serverInfo.getOutboundBytesRate());
-            putServerValue(map, "OutboundMessageRate", serverInfo.getOutboundMessageRate());
-
-            putServerValue(map, "ConnectionCount", serverInfo.getConnectionCount());
-            putServerValue(map, "MaxConnections", serverInfo.getMaxConnections());
-
-            putServerValue(map, "ProducerCount", serverInfo.getProducerCount());
-            putServerValue(map, "ConsumerCount", serverInfo.getConsumerCount());
-
-            putServerValue(map, "PendingMessageCount", serverInfo.getPendingMessageCount());
-            putServerValue(map, "PendingMessageSize", serverInfo.getPendingMessageSize());
-            putServerValue(map, "InboundMessageCount", serverInfo.getInboundMessageCount());
-            putServerValue(map, "OutboundMessageCount", serverInfo.getOutboundMessageCount());
-
+            putServerInfo(serverInfo);
 
             // get most accurate time
             currentTime = System.currentTimeMillis();
-            logger.debug("Retrieving Queue Information");
 
-            QueueInfo[] queueInfos = null;
-            ProducerInfo[] producerInfos = null;
+//            logger.debug("Retrieving producer information");
+//            ProducerInfo[] producerInfos = conn.getProducersStatistics();
 
-            try
-            {
-                producerInfos = conn.getProducersStatistics();
-                if (debug)
-                {
-                    logger.debug("Retrieving Producer Information");
-                    if (producerInfos.length > 0)
-                    {
-                        logger.debug("Producing Information is Greater than ZERO");
-                    }
-                }
-
-            }
-            catch (Exception e)
-            {
-                e.printStackTrace();
-            }
-
-            try
-            {
-                queueInfos = conn.getQueuesStatistics();
-                if (debug)
-                {
-                    logger.debug("Retrieving Queue Information");
-                    if (queueInfos.length > 0)
-                    {
-                        logger.debug("Queue Information is Greater than ZERO");
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                e.printStackTrace();
-            }
+            logger.debug("Retrieving queue information");
+            QueueInfo[] queueInfos = conn.getQueuesStatistics();
 
             if (queueInfos == null)
             {
@@ -179,68 +189,36 @@ public class TibcoEMSMonitor3 extends JavaServersMonitor
             {
                 for (QueueInfo queueInfo : queueInfos)
                 {
-
-                    String queueName = queueInfo.getName();
-
-                    if (queueName.startsWith("$TMP$.") && !showTempQueues)
+                    if (shouldMonitorQueue(queueInfo))
                     {
-                        logger.info("Skipping temporary queue " + queueName);
+                        logger.info("Publishing metrics for queue " + queueInfo.getName());
+                        putQueueInfo(queueInfo);
                     }
-                    else if (queueName.startsWith("$sys.") && !showSysQueues)
-                    {
-                        logger.info("Skipping system queue " + queueName);
-                    }
-                    else
-                    {
-                        logger.info("Publishing metrics for queue " + queueName);
-
-                        putQueueValue(map, queueName, "ConsumerCount", queueInfo.getConsumerCount());
-                        putQueueValue(map, queueName, "InTransitCount", queueInfo.getInTransitMessageCount());
-                        putQueueValue(map, queueName, "PendingMessageCount", queueInfo.getPendingMessageCount());
-                        putQueueValue(map, queueName, "FlowControlMaxBytes", queueInfo.getFlowControlMaxBytes());
-                        putQueueValue(map, queueName, "MaxMsgs", queueInfo.getMaxMsgs());
-                        putQueueValue(map, queueName, "PendingMessageSize", queueInfo.getPendingMessageSize());
-                        putQueueValue(map, queueName, "ReceiverCount", queueInfo.getReceiverCount());
-                        putQueueValue(map, queueName, "MaxMsgs", queueInfo.getMaxMsgs());
-                        putQueueValue(map, queueName, "MaxBytes", queueInfo.getMaxBytes());
-
-                        // Inbound metrics
-                        StatData inboundData = queueInfo.getInboundStatistics();
-                        putQueueValue(map, queueName, "InboundByteRate", inboundData.getByteRate());
-                        putQueueValue(map, queueName, "InboundMessageRate", inboundData.getMessageRate());
-                        putQueueValue(map, queueName, "InboundByteCount", inboundData.getTotalBytes());
-                        putQueueValue(map, queueName, "InboundMessageCount", inboundData.getTotalMessages());
-
-                        // Outbound metrics
-                        StatData outboundData = queueInfo.getOutboundStatistics();
-                        putQueueValue(map, queueName, "OutboundByteRate", outboundData.getByteRate());
-                        putQueueValue(map, queueName, "OutboundMessageRate", outboundData.getMessageRate());
-                        putQueueValue(map, queueName, "OutboundByteCount", outboundData.getTotalBytes());
-                        putQueueValue(map, queueName, "OutboundMessageCount", outboundData.getTotalMessages());
-                    }
-
                 }
             }
 
-            logger.info("Closing connection to EMS server");
-            conn.close();
         }
         catch (com.tibco.tibjms.admin.TibjmsAdminException ex)
         {
-            logger.error("Error connecting to EMS server" + serverName + " "
+            logger.error("Error connecting to EMS server " + serverName + " "
                     + port + " " + this.hostname + " " + this.password, ex);
         }
         catch (Exception ex)
         {
             logger.error("Error getting performance data from Tibco EMS", ex);
         }
-        return Collections.synchronizedMap(map);
+        finally
+        {
+            if (conn != null) {
+                logger.info("Closing connection to EMS server");
+                conn.close();
+            }
+        }
     }
 
     public TaskOutput execute(Map<String, String> taskArguments, TaskExecutionContext taskContext)
             throws TaskExecutionException
     {
-
         logger.debug("Starting Execute Thread: " + taskArguments + " : " + taskContext);
 
         startExecute(taskArguments, taskContext);
@@ -256,16 +234,12 @@ public class TibcoEMSMonitor3 extends JavaServersMonitor
         // just for debug output
         logger.debug("Starting METRIC COLLECTION for Tibco EMS Monitor");
 
-        Map<String, String> map;
         try
         {
-            map = this.putValuesIntoMap();
-            Iterator<String> keys = map.keySet().iterator();
-            while (keys.hasNext())
+            putValuesIntoMap();
+            for (Map.Entry<String, String> entry : valueMap.entrySet())
             {
-                String key = keys.next();
-                String value = map.get(key);
-                printMetric(key, value);
+                printMetric(entry.getKey(), entry.getValue());
             }
         }
         catch (Exception e)
@@ -280,10 +254,6 @@ public class TibcoEMSMonitor3 extends JavaServersMonitor
 
     private void printMetric(String name, String value)
     {
-        if (logger.isDebugEnabled())
-        {
-            logger.debug("* * * KEY: " + name + " VALUE: " + value);
-        }
         printMetric(name, value,
                 MetricWriter.METRIC_AGGREGATION_TYPE_OBSERVATION,
                 MetricWriter.METRIC_TIME_ROLLUP_TYPE_CURRENT,
@@ -292,7 +262,7 @@ public class TibcoEMSMonitor3 extends JavaServersMonitor
 
     protected String getMetricPrefix()
     {
-        logger.debug("Tier name is " + tierName);
+        logger.debug("tierName=" + tierName + " serverName=" + serverName);
         if (serverName != null && serverName.trim().length() > 0)
         {
             return "Custom Metrics|" + tierName + "|" + serverName + "|";
@@ -305,7 +275,11 @@ public class TibcoEMSMonitor3 extends JavaServersMonitor
 
     public static void main(String[] args) throws TaskExecutionException
     {
-        new TibcoEMSMonitor3().execute(null, null);
+        Map<String, String> params = new HashMap<String, String>();
+        params.put("hostname", "192.168.56.101");
+        params.put("password", null);
+        params.put("queuesToExclude", "sample");
+        new TibcoEMSMonitor3().execute(params, null);
     }
 
 }
