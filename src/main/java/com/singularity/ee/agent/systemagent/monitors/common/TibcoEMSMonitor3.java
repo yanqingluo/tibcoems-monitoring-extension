@@ -20,14 +20,14 @@ public class TibcoEMSMonitor3 extends JavaServersMonitor
     private String port;
     private String protocol;
     private List<Pattern> queuePatternsToExclude;
+    private List<Pattern> topicPatternsToExclude;
     private boolean showTempQueues = false;
     private boolean showSysQueues = false;
 
 
     public TibcoEMSMonitor3()
     {
-        oldValueMap = Collections
-                .synchronizedMap(new HashMap<String, String>());
+        oldValueMap = Collections.synchronizedMap(new HashMap<String, String>());
     }
 
     protected void parseArgs(Map<String, String> args)
@@ -45,12 +45,21 @@ public class TibcoEMSMonitor3 extends JavaServersMonitor
         showTempQueues = Boolean.valueOf(getArg(args, "showTempQueues", "false"));
         showSysQueues = Boolean.valueOf(getArg(args, "showSysQueues", "false"));
 
-        String[] queuesToExclude = getArg(args, "queuesToExclude", "").trim().split("\\s+");
-        queuePatternsToExclude = new ArrayList<Pattern>();
-        for (String pattern : queuesToExclude)
+        queuePatternsToExclude = parsePatternArg(args, "queuesToExclude");
+        topicPatternsToExclude = parsePatternArg(args, "topicsToExclude");
+    }
+
+    private List<Pattern> parsePatternArg(Map<String, String> args, String name)
+    {
+        ArrayList<Pattern> patternList = new ArrayList<Pattern>();
+
+        String[] patterns = getArg(args, name, "").trim().split("\\s+");
+        for (String pattern : patterns)
         {
-            queuePatternsToExclude.add(Pattern.compile(pattern));
+            patternList.add(Pattern.compile(pattern));
         }
+
+        return patternList;
     }
 
     private TibjmsAdmin connect() throws TibjmsAdminException
@@ -91,67 +100,129 @@ public class TibcoEMSMonitor3 extends JavaServersMonitor
         putServerValue("OutboundMessagesPerMinute", getDeltaValue("OutboundMessageCount"));
     }
 
-    private void putQueueValue(String queueName, String key, long value)
+    private void putDestinationValue(String prefix, String key, long value)
     {
-        valueMap.put(queueName + "|" + key, Long.toString(value));
+        valueMap.put(prefix + "|" + key, Long.toString(value));
+    }
+
+    private void putDestinationInfo(String prefix, DestinationInfo destInfo)
+    {
+        putDestinationValue(prefix, "ConsumerCount", destInfo.getConsumerCount());
+        putDestinationValue(prefix, "PendingMessageCount", destInfo.getPendingMessageCount());
+        putDestinationValue(prefix, "FlowControlMaxBytes", destInfo.getFlowControlMaxBytes());
+        putDestinationValue(prefix, "MaxMsgs", destInfo.getMaxMsgs());
+        putDestinationValue(prefix, "PendingMessageSize", destInfo.getPendingMessageSize());
+        putDestinationValue(prefix, "MaxMsgs", destInfo.getMaxMsgs());
+        putDestinationValue(prefix, "MaxBytes", destInfo.getMaxBytes());
+
+        // Inbound metrics
+        StatData inboundData = destInfo.getInboundStatistics();
+        putDestinationValue(prefix, "InboundByteRate", inboundData.getByteRate());
+        putDestinationValue(prefix, "InboundMessageRate", inboundData.getMessageRate());
+        putDestinationValue(prefix, "InboundByteCount", inboundData.getTotalBytes());
+        putDestinationValue(prefix, "InboundMessageCount", inboundData.getTotalMessages());
+
+        // Outbound metrics
+        StatData outboundData = destInfo.getOutboundStatistics();
+        putDestinationValue(prefix, "OutboundByteRate", outboundData.getByteRate());
+        putDestinationValue(prefix, "OutboundMessageRate", outboundData.getMessageRate());
+        putDestinationValue(prefix, "OutboundByteCount", outboundData.getTotalBytes());
+        putDestinationValue(prefix, "OutboundMessageCount", outboundData.getTotalMessages());
+
+        putDestinationValue(prefix, "InboundMessagesPerMinute", getDeltaValue(prefix + "|InboundMessageCount"));
+        putDestinationValue(prefix, "OutboundMessagesPerMinute", getDeltaValue(prefix + "|OutboundMessageCount"));
+        putDestinationValue(prefix, "InboundBytesPerMinute", getDeltaValue(prefix + "|InboundByteCount"));
+        putDestinationValue(prefix, "OutboundBytesPerMinute", getDeltaValue(prefix + "|OutboundByteCount"));
     }
 
     private void putQueueInfo(QueueInfo queueInfo)
     {
-        String queueName = queueInfo.getName();
+        String prefix = "Queues|" + queueInfo.getName();
 
-        putQueueValue(queueName, "ConsumerCount", queueInfo.getConsumerCount());
-        putQueueValue(queueName, "InTransitCount", queueInfo.getInTransitMessageCount());
-        putQueueValue(queueName, "PendingMessageCount", queueInfo.getPendingMessageCount());
-        putQueueValue(queueName, "FlowControlMaxBytes", queueInfo.getFlowControlMaxBytes());
-        putQueueValue(queueName, "MaxMsgs", queueInfo.getMaxMsgs());
-        putQueueValue(queueName, "PendingMessageSize", queueInfo.getPendingMessageSize());
-        putQueueValue(queueName, "ReceiverCount", queueInfo.getReceiverCount());
-        putQueueValue(queueName, "MaxMsgs", queueInfo.getMaxMsgs());
-        putQueueValue(queueName, "MaxBytes", queueInfo.getMaxBytes());
-
-        // Inbound metrics
-        StatData inboundData = queueInfo.getInboundStatistics();
-        putQueueValue(queueName, "InboundByteRate", inboundData.getByteRate());
-        putQueueValue(queueName, "InboundMessageRate", inboundData.getMessageRate());
-        putQueueValue(queueName, "InboundByteCount", inboundData.getTotalBytes());
-        putQueueValue(queueName, "InboundMessageCount", inboundData.getTotalMessages());
-
-        // Outbound metrics
-        StatData outboundData = queueInfo.getOutboundStatistics();
-        putQueueValue(queueName, "OutboundByteRate", outboundData.getByteRate());
-        putQueueValue(queueName, "OutboundMessageRate", outboundData.getMessageRate());
-        putQueueValue(queueName, "OutboundByteCount", outboundData.getTotalBytes());
-        putQueueValue(queueName, "OutboundMessageCount", outboundData.getTotalMessages());
-
-        putQueueValue(queueName, "InboundMessagesPerMinute", getDeltaValue(queueName + "|InboundMessageCount"));
-        putQueueValue(queueName, "OutboundMessagesPerMinute", getDeltaValue(queueName + "|OutboundMessageCount"));
-        putQueueValue(queueName, "InboundBytesPerMinute", getDeltaValue(queueName + "|InboundByteCount"));
-        putQueueValue(queueName, "OutboundBytesPerMinute", getDeltaValue(queueName + "|OutboundByteCount"));
+        putDestinationInfo(prefix, queueInfo);
+        putDestinationValue(prefix, "InTransitCount", queueInfo.getInTransitMessageCount());
+        putDestinationValue(prefix, "ReceiverCount", queueInfo.getReceiverCount());
     }
 
-    private boolean shouldMonitorQueue(QueueInfo queueInfo)
+    private void putTopicInfo(TopicInfo topicInfo)
     {
-        String queueName = queueInfo.getName();
+        String prefix = "Topics|" + topicInfo.getName();
 
-        if (queueName.startsWith("$TMP$.") && !showTempQueues)
+        putDestinationInfo(prefix, topicInfo);
+        putDestinationValue(prefix, "ConsumerCount", topicInfo.getConsumerCount());
+        putDestinationValue(prefix, "SubscriberCount", topicInfo.getSubscriberCount());
+        putDestinationValue(prefix, "ActiveDurableCount", topicInfo.getActiveDurableCount());
+        putDestinationValue(prefix, "DurableCount", topicInfo.getDurableCount());
+    }
+
+    private void putQueueInfos(TibjmsAdmin conn) throws TibjmsAdminException
+    {
+        logger.debug("Retrieving queue information");
+        QueueInfo[] queueInfos = conn.getQueuesStatistics();
+
+        if (queueInfos == null)
         {
-            logger.info("Skipping temporary queue '" + queueName + "'");
+            logger.warn("Unable to get queue statistics");
+        }
+        else
+        {
+            for (QueueInfo queueInfo : queueInfos)
+            {
+                if (shouldMonitorDestination(queueInfo, queuePatternsToExclude))
+                {
+                    logger.info("Publishing metrics for queue " + queueInfo.getName());
+                    putQueueInfo(queueInfo);
+                }
+            }
+        }
+    }
+
+
+    private void putTopicInfos(TibjmsAdmin conn) throws TibjmsAdminException
+    {
+        logger.debug("Retrieving topic information");
+        TopicInfo[] topicInfos = conn.getTopicsStatistics();
+
+        if (topicInfos == null)
+        {
+            logger.warn("Unable to get topic statistics");
+        }
+        else
+        {
+            for (TopicInfo topicInfo : topicInfos)
+            {
+                if (shouldMonitorDestination(topicInfo, topicPatternsToExclude))
+                {
+                    logger.info("Publishing metrics for topic " + topicInfo.getName());
+                    putTopicInfo(topicInfo);
+                }
+            }
+        }
+    }
+
+    private boolean shouldMonitorDestination(DestinationInfo destInfo, List<Pattern> patternsToExclude)
+    {
+        String destName = destInfo.getName();
+
+        if (destName.startsWith("$TMP$.") && !showTempQueues)
+        {
+            logger.info("Skipping temporary destination '" + destName + "'");
             return false;
         }
-        else if (queueName.startsWith("$sys.") && !showSysQueues)
+        else if (destName.startsWith("$sys.") && !showSysQueues)
         {
-            logger.info("Skipping system queue '" + queueName + "'");
+            logger.info("Skipping system destination '" + destName + "'");
             return false;
         }
         else
         {
-            for (Pattern patternToExclude : queuePatternsToExclude)
+            for (Pattern patternToExclude : patternsToExclude)
             {
-                Matcher matcher = patternToExclude.matcher(queueName);
-                if (matcher.matches()) {
-                    logger.info(String.format("Skipping queue '%s' due to pattern '%s' in queuesToExclude",
-                            queueName, patternToExclude.pattern()));
+                Matcher matcher = patternToExclude.matcher(destName);
+                if (matcher.matches())
+                {
+                    logger.info(String.format("Skipping queue '%s' due to excluded pattern '%s'",
+                            destName, patternToExclude.pattern()));
                     return false;
                 }
             }
@@ -172,31 +243,11 @@ public class TibcoEMSMonitor3 extends JavaServersMonitor
             ServerInfo serverInfo = conn.getInfo();
             putServerInfo(serverInfo);
 
-            // get most accurate time
-            currentTime = System.currentTimeMillis();
-
 //            logger.debug("Retrieving producer information");
 //            ProducerInfo[] producerInfos = conn.getProducersStatistics();
 
-            logger.debug("Retrieving queue information");
-            QueueInfo[] queueInfos = conn.getQueuesStatistics();
-
-            if (queueInfos == null)
-            {
-                logger.warn("Unable to get queue statistics");
-            }
-            else
-            {
-                for (QueueInfo queueInfo : queueInfos)
-                {
-                    if (shouldMonitorQueue(queueInfo))
-                    {
-                        logger.info("Publishing metrics for queue " + queueInfo.getName());
-                        putQueueInfo(queueInfo);
-                    }
-                }
-            }
-
+            putQueueInfos(conn);
+            putTopicInfos(conn);
         }
         catch (com.tibco.tibjms.admin.TibjmsAdminException ex)
         {
