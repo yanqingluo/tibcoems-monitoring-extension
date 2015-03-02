@@ -69,44 +69,26 @@ Configuration for this monitor is in the `monitor.xml` file in the monitor
 directory. All of the configurable options are in the `<task-arguments>` 
 section.
 
-hostname
-: Name or IP address of the Tibco EMS server. Required.
-
-port
-: TCP port number where the Tibco server is listening. The default value is 
-  7222. Required.
-
-userid
-: Administrative user ID for the Tibco admin interface. The default value is
-  "admin". Required.
-
-password
-: Password for the administrative user ID. The default value is an empty
-  password. Required.
-
-tier
-: Name of the tier in AppDynamics for which the monitor should register its
-  metrics. If not specified, the metrics will be registered on all tiers.
-  Optional.
-
-emsServerName
-: An additional folder to create under the "Custom Metrics" folder. If you are
-  using this extension to monitor several EMS servers, you can use this option
-  to put each server into its own folder. Optional.
-
-showTempQueues
-: If set to true, the monitor will report metrics on temporary queues (defined
-  as any queue whose name starts with `$TMP$.`). **NOTE:** Enabling this option
-  can potentially cause the agent to overflow its metric limit.
-
-showSysQueues
-: If set to true, the monitor will report metrics on system queues (defined as
-  any queue whose name starts with `$sys.`).
-
-queuesToExclude
-: A whitespace-separated list of regex patterns. Queues that match any of the 
-  patterns will be excluded from the output. Optional.
-
+ * _hostname_ - Name or IP address of the Tibco EMS server. Required.
+ * _port_ - TCP port number where the Tibco server is listening. The default value is 7222. Required.
+ * _protocol_ - Specify "tcp" to use standard TCP or "ssl" to use SSL. The default is "tcp".
+ * _userid_ - Administrative user ID for the Tibco admin interface. The default value is "admin". Required.
+ * _password_ - Password for the administrative user ID. The default value is an empty password. Required.
+ * _tier_ - Name of the tier in AppDynamics for which the monitor should register its
+   metrics. If not specified, the metrics will be registered on all tiers.
+   Optional.
+ * _emsServerName_ - An additional folder to create under the "Custom Metrics" folder. If you are
+   using this extension to monitor several EMS servers, you can use this option
+   to put each server into its own folder. Optional.
+ * _showTempQueues_ - If set to true, the monitor will report metrics on temporary queues (defined
+   as any queue whose name starts with `$TMP$.`). **NOTE:** Enabling this option
+   can potentially cause the agent to overflow its metric limit.
+ * _showSysQueues_ - If set to true, the monitor will report metrics on system queues (defined as
+   any queue whose name starts with `$sys.`).
+ * _queuesToExclude_ - A whitespace-separated list of regex patterns. Queues that match any of the 
+   patterns will be excluded from the output. Optional.
+ * _topicsToExclude_ - A whitespace-separated list of regex patterns. Topic names that match any of the 
+   patterns will be excluded from the output. Optional.
 
 ## Metrics Provided
 
