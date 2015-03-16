@@ -18,8 +18,6 @@ public abstract class JavaServersMonitor extends AManagedMonitor
 
     protected volatile Map<String, String> oldValueMap;
     protected volatile Map<String, String> valueMap;
-    protected volatile long oldTime = 0;
-    protected volatile long currentTime = 0;
 
     public abstract TaskOutput execute(Map<String, String> taskArguments, TaskExecutionContext taskContext)
             throws TaskExecutionException;
@@ -69,7 +67,6 @@ public abstract class JavaServersMonitor extends AManagedMonitor
     protected TaskOutput finishExecute()
     {
         oldValueMap = valueMap;
-        oldTime = currentTime;
 
         // just for debug output
         logger.debug("Finished execution");
