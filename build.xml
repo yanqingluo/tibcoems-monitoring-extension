@@ -88,7 +88,11 @@
 
   <!-- Project Libraries -->
 
-  <path id="library.log4j.classpath">
+    <path id="library.commons-lang.classpath">
+        <pathelement location="${basedir}/lib/commons-lang-2.4.jar"/>
+    </path>
+
+    <path id="library.log4j.classpath">
     <pathelement location="${basedir}/lib/log4j-1.2.15.jar"/>
   </path>
 
@@ -142,6 +146,7 @@
     <path refid="${module.jdk.classpath.tibcoemsmonitor}"/>
     <path refid="library.machineagent.classpath"/>
     <path refid="library.log4j.classpath"/>
+    <path refid="library.commons-lang.classpath"/>
     <path refid="library.tibcoems.classpath"/>
   </path>
 
@@ -149,6 +154,7 @@
     <pathelement location="${tibcoemsmonitor.dist.dir}"/>
     <path refid="library.machineagent.classpath"/>
     <path refid="library.log4j.classpath"/>
+    <path refid="library.commons-lang.classpath"/>
     <path refid="library.tibcoems.classpath"/>
   </path>
 
@@ -157,6 +163,7 @@
     <pathelement location="${tibcoemsmonitor.dist.dir}"/>
     <path refid="library.machineagent.classpath"/>
     <path refid="library.log4j.classpath"/>
+    <path refid="library.commons-lang.classpath"/>
     <path refid="library.tibcoems.classpath"/>
   </path>
 
@@ -165,6 +172,7 @@
     <pathelement location="${tibcoemsmonitor.dist.dir}"/>
     <path refid="library.machineagent.classpath"/>
     <path refid="library.log4j.classpath"/>
+    <path refid="library.commons-lang.classpath"/>
     <path refid="library.tibcoems.classpath"/>
   </path>
 
@@ -245,6 +253,7 @@
     <copy file="${basedir}/README.md" todir="${tibcoemsmonitor.folder.path}"/>
     <copy file="${tibcoemsmonitor.jar.path}" todir="${tibcoemsmonitor.folder.path}"/>
     <copy file="${basedir}/lib/log4j-1.2.15.jar" todir="${tibcoemsmonitor.folder.path}/lib"/>
+    <copy file="${basedir}/lib/commons-lang-2.4.jar" todir="${tibcoemsmonitor.folder.path}/lib"/>
     <copy file="${basedir}/lib/jms.jar" todir="${tibcoemsmonitor.folder.path}/lib"/>
     <copy file="${basedir}/lib/slf4j-api-1.4.2.jar" todir="${tibcoemsmonitor.folder.path}/lib"/>
     <copy file="${basedir}/lib/slf4j-simple-1.4.2.jar" todir="${tibcoemsmonitor.folder.path}/lib"/>
