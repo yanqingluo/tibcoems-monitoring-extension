@@ -242,16 +242,16 @@ public class TibcoEMSMonitor3 extends JavaServersMonitor {
         String destName = destInfo.getName();
 
         if (destName.startsWith("$TMP$.") && !showTempQueues) {
-            logger.info("Skipping temporary destination '" + destName + "'");
+            logger.debug("Skipping temporary destination '" + destName + "'");
             return false;
         } else if (destName.startsWith("$sys.") && !showSysQueues) {
-            logger.info("Skipping system destination '" + destName + "'");
+            logger.debug("Skipping system destination '" + destName + "'");
             return false;
         } else {
             for (Pattern patternToExclude : patternsToExclude) {
                 Matcher matcher = patternToExclude.matcher(destName);
                 if (matcher.matches()) {
-                    logger.info(String.format("Skipping queue '%s' due to excluded pattern '%s'",
+                    logger.debug(String.format("Skipping queue '%s' due to excluded pattern '%s'",
                             destName, patternToExclude.pattern()));
                     return false;
                 }
