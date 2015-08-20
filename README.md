@@ -157,14 +157,17 @@ when starting the Machine Agent, like this:
 For any questions or feature requests, please contact the [AppDynamics Center 
 of Excellence][].
 
-**Version:** 2.3.2  
+**Version:** 2.3.7  
 **Controller Compatibility:** 3.6 or later  
-**Last Updated:** 20-Oct-2014  
+**Last Updated:** 20-Aug-2015
 **Author:** Todd Radel  
 
 ------------------------------------------------------------------------------
 
 ## Release Notes
+
+### Version 2.3.7
+  - Added missing `commons-lang.jar` to classpath.
 
 ### Version 2.3.6
   - Changed logging level in shouldMonitorDestination() from `INFO` to `DEBUG`.
