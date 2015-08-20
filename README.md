@@ -166,9 +166,20 @@ of Excellence][].
 
 ## Release Notes
 
+### Version 2.3.6
+  - Changed logging level in shouldMonitorDestination() from `INFO` to `DEBUG`.
+
+### Version 2.3.5
+  - Adds new SSL configuration properties: `sslIdentityFile`, `sslIdentityPassword`, `sslTrustedCerts`, 
+    `sslIssuerCerts`, `sslDebug`, `sslVendor`, `sslVerifyHost`, `sslVerifyHostName`. 
+    Please check the `monitor.xml` bundled with this release for details.
+
+### Version 2.3.4
+  - Adding support for SSL and topics.
+
 ### Version 2.3.2
-  - Added new derived metrics: InboundMessagesPerMinute, 
-    OutboundMessagesPerMinute, InboundBytesPerMinute, and OutboundBytesPerMinute.
+  - Added new derived metrics: InboundMessagesPerMinute, OutboundMessagesPerMinute, 
+    InboundBytesPerMinute, and OutboundBytesPerMinute.
   - General cleanup of code.
 
 ### Version 2.3.1
