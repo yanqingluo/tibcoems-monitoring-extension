@@ -1,0 +1,46 @@
+emsServers:
+   - displayName: "Local EMS"
+     host: "localhost"
+     port: 7222
+     # Supports tcp and ssl
+     protocol: "tcp"
+     user: "admin"
+     password:
+     encryptedPassword:
+     encryptionKey:
+     #config to show temp queues and topics
+     showTemp: false
+     #config to show system queues and topics
+     showSystem: false
+     excludeQueues: []
+     excludeTopics: []
+     sslIdentityFile:
+     sslIdentityPassword:
+     sslTrustedCerts:
+     #ssl config optional settings
+     sslDebug:
+     sslVerifyHost:
+     sslVerifyHostName:
+     sslVendor:
+   - displayName: "Remote EMS"
+     host: "localhost"
+     port: 7222
+     # Supports tcp and ssl
+     protocol: "tcp"
+     user: "admin"
+     password:
+     encryptedPassword:
+     encryptionKey:
+     #config to show temp queues and topics
+     showTemp: false
+     #config to show system queues and topics
+     showSystem: false
+     excludeQueues: []
+     excludeTopics: []
+
+
+# number of concurrent tasks
+numberOfThreads: 1
+
+#prefix used to show up metrics in AppDynamics
+metricPrefix: "Custom Metrics|Tibco EMS|"

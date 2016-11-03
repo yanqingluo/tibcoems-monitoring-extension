@@ -1,82 +1,106 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<module type="JAVA_MODULE" version="4">
-  <component name="EclipseModuleManager">
-    <libelement value="file://lib-jms/jms.jar" />
-    <libelement value="file://lib-jms/tibjms.jar" />
-    <libelement value="file://lib-tibco/jms.jar" />
-    <libelement value="file://lib-tibco/slf4j-api-1.4.2.jar" />
-    <libelement value="file://lib-tibco/slf4j-simple-1.4.2.jar" />
-    <libelement value="file://lib-tibco/tibcrypt.jar" />
-    <libelement value="file://lib-tibco/tibemsd_sec.jar" />
-    <libelement value="file://lib-tibco/tibjms.jar" />
-    <libelement value="file://lib-tibco/tibjmsadmin.jar" />
-    <libelement value="file://lib-tibco/tibjmsapps.jar" />
-    <libelement value="file://lib-tibco/tibjmsufo.jar" />
-    <libelement value="file://lib-tibco/tibrvjms.jar" />
-    <libelement value="file://lib/mysql.jar" />
-    <libelement value="file://lib/tools.jar" />
-    <libelement value="file://lib/tp/ant-antlr.jar" />
-    <libelement value="file://lib/tp/ant-apache-bcel.jar" />
-    <libelement value="file://lib/tp/ant-apache-bsf.jar" />
-    <libelement value="file://lib/tp/ant-apache-log4j.jar" />
-    <libelement value="file://lib/tp/ant-apache-oro.jar" />
-    <libelement value="file://lib/tp/ant-apache-regexp.jar" />
-    <libelement value="file://lib/tp/ant-apache-resolver.jar" />
-    <libelement value="file://lib/tp/ant-commons-logging.jar" />
-    <libelement value="file://lib/tp/ant-commons-net.jar" />
-    <libelement value="file://lib/tp/ant-jai.jar" />
-    <libelement value="file://lib/tp/ant-javamail.jar" />
-    <libelement value="file://lib/tp/ant-jdepend.jar" />
-    <libelement value="file://lib/tp/ant-jmf.jar" />
-    <libelement value="file://lib/tp/ant-jsch.jar" />
-    <libelement value="file://lib/tp/ant-junit.jar" />
-    <libelement value="file://lib/tp/ant-launcher.jar" />
-    <libelement value="file://lib/tp/ant-netrexx.jar" />
-    <libelement value="file://lib/tp/ant-nodeps.jar" />
-    <libelement value="file://lib/tp/ant-starteam.jar" />
-    <libelement value="file://lib/tp/ant-stylebook.jar" />
-    <libelement value="file://lib/tp/ant-swing.jar" />
-    <libelement value="file://lib/tp/ant-testutil.jar" />
-    <libelement value="file://lib/tp/ant-trax.jar" />
-    <libelement value="file://lib/tp/ant-weblogic.jar" />
-    <libelement value="file://lib/tp/ant.jar" />
-    <libelement value="file://lib/tp/commons-codec-1.3.jar" />
-    <libelement value="file://lib/tp/commons-fileupload-1.2.1.jar" />
-    <libelement value="file://lib/tp/commons-httpclient-3.1.jar" />
-    <libelement value="file://lib/tp/commons-io-1.4.jar" />
-    <libelement value="file://lib/tp/commons-logging-1.1.1.jar" />
-    <libelement value="file://lib/tp/commons-logging-adapters-1.1.1.jar" />
-    <libelement value="file://lib/tp/commons-logging-api-1.1.1.jar" />
-    <libelement value="file://lib/tp/jetty-6.1.3.jar" />
-    <libelement value="file://lib/tp/jetty-util-6.1.3.jar" />
-    <libelement value="file://lib/tp/log4j-1.2.15.jar" />
-    <libelement value="file://lib/tp/log4j.jar" />
-    <libelement value="file://lib/tp/servlet-api-2.5-6.1.3.jar" />
-    <libelement value="file://lib/tp/sigar.jar" />
-    <libelement value="file://lib/tp/singularity-xml.jar" />
-    <libelement value="file://lib/tp/xercesImpl.jar" />
-    <libelement value="file://lib/tp/xml-apis.jar" />
-    <libelement value="file://libs-other/log4j-1.2.15.jar" />
-    <libelement value="file://libs-other/mysql-connector-java-5.1.17-bin.jar" />
-    <libelement value="file://libs-other/mysql.jar" />
-    <libelement value="file://libs-other/singularity-xml.jar" />
-    <libelement value="file://machineagent.jar" />
-    <src_description expected_position="0">
-      <src_folder value="file://$MODULE_DIR$/src" expected_position="0" />
-    </src_description>
-  </component>
-  <component name="NewModuleRootManager" inherit-compiler-output="false">
-    <output url="file://$MODULE_DIR$/build" />
-    <exclude-output />
+<module org.jetbrains.idea.maven.project.MavenProjectsManager.isMavenModule="true" type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_5" inherit-compiler-output="false">
+    <output url="file://$MODULE_DIR$/target/classes" />
+    <output-test url="file://$MODULE_DIR$/target/test-classes" />
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src/main/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/main/resources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/src.test/java" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/src/test/java" isTestSource="true" />
+      <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
-    <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="inheritedJdk" />
-    <orderEntry type="library" name="tibco-ems-libs" level="project" />
-    <orderEntry type="library" name="jms-libs" level="project" />
-    <orderEntry type="library" name="machine-agent-libs" level="project" />
-    <orderEntry type="library" name="apache-commons-libs" level="project" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="Maven: com.appdynamics:machine-agent:3.7.11" level="project" />
+    <orderEntry type="library" name="Maven: com.appdynamics:appd-exts-commons:1.6.2" level="project" />
+    <orderEntry type="library" name="Maven: org.slf4j:slf4j-api:1.7.6" level="project" />
+    <orderEntry type="library" name="Maven: com.google.guava:guava:11.0.2" level="project" />
+    <orderEntry type="library" name="Maven: org.codehaus.jackson:jackson-core-asl:1.9.13" level="project" />
+    <orderEntry type="library" name="Maven: org.codehaus.jackson:jackson-mapper-asl:1.9.13" level="project" />
+    <orderEntry type="library" name="Maven: javax.ws.rs:jsr311-api:1.1.1" level="project" />
+    <orderEntry type="library" name="Maven: org.nanohttpd:nanohttpd:2.3.0" level="project" />
+    <orderEntry type="library" name="Maven: org.yaml:snakeyaml:1.13" level="project" />
+    <orderEntry type="library" name="Maven: javax.jms:javax.jms-api:2.0" level="project" />
+    <orderEntry type="module-library">
+      <library name="Maven: tibco:tibcrypt:1.0">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/tibcrypt.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="Maven: tibco:tibemsd_sec:1.0">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/tibemsd_sec.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="Maven: tibco:tibjms:1.0">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/tibjms.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="Maven: tibco:tibjmsadmin:1.0">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/tibjmsadmin.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="Maven: tibco:tibjmsapps:1.0">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/tibjmsapps.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="Maven: tibco:tibjmsufo:1.0">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/tibjmsufo.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="Maven: tibco:tibrvjms:1.0">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/tibrvjms.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="library" name="Maven: commons-codec:commons-codec:1.6" level="project" />
+    <orderEntry type="library" name="Maven: commons-lang:commons-lang:2.6" level="project" />
+    <orderEntry type="library" name="Maven: commons-io:commons-io:2.4" level="project" />
+    <orderEntry type="library" name="Maven: commons-logging:commons-logging:1.1.3" level="project" />
+    <orderEntry type="library" name="Maven: log4j:log4j:1.2.17" level="project" />
+    <orderEntry type="library" name="Maven: org.slf4j:slf4j-log4j12:1.7.21" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: junit:junit:4.11" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.hamcrest:hamcrest-core:1.3" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.powermock:powermock-api-mockito:1.4.7" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.mockito:mockito-all:1.8.5" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.powermock:powermock-api-support:1.4.7" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.powermock:powermock-core:1.4.7" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.javassist:javassist:3.14.0-GA" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.powermock:powermock-reflect:1.4.7" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.objenesis:objenesis:1.2" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.powermock:powermock-module-junit4:1.4.7" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.powermock:powermock-module-junit4-common:1.4.7" level="project" />
   </component>
 </module>
-

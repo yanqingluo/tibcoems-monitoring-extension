@@ -1,5 +1,0 @@
-Manifest-Version: 1.0
-Class-Path: machineagent.jar tibjmsapps.jar tibjmsufo.jar tibrvjms.jar
-  slf4j-simple-1.4.2.jar jms.jar tibjms.jar slf4j-api-1.4.2.jar tibjms
- admin.jar tibemsd_sec.jar tibcrypt.jar mysql.jar log4j-1.2.15.jar
-Main-Class: com.singularity.ee.agent.systemagent.monitors.common.TibcoEMSMonitor3

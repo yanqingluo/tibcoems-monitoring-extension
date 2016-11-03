@@ -32,7 +32,9 @@
         -->
 
         <task-arguments>
-            <argument name="hostname" is-required="true" default-value="10.211.55.4"/>
+            <argument name="config-file" is-required="true" default-value="monitors/TibcoEMSMonitor/config.yml"/>
+
+            <!--<argument name="hostname" is-required="true" default-value="10.211.55.4"/>
             <argument name="protocol" is-required="false" default-value="ssl"/>
             <argument name="port" is-required="true" default-value="7222"/>
             <argument name="username" is-required="true" default-value="admin"/>
@@ -44,7 +46,7 @@
             <argument name="queuesToExclude" is-required="false" default-value="sample1 sample2"/>
             <argument name="sslIdentityFile" is-required="false" default-value="test/conf/client_identity.p12"/>
             <argument name="sslIdentityPassword" is-required="false" default-value="password"/>
-            <argument name="sslTrustedCerts" is-required="false" default-value="test/conf/server_cert.pem"/>
+            <argument name="sslTrustedCerts" is-required="false" default-value="test/conf/server_cert.pem"/>-->
 
             <!--
             Optional settings for SSL
@@ -55,10 +57,8 @@
             -->
         </task-arguments>
         <java-task>
-            <classpath>
-                TibcoEMSMonitor.jar:lib/commons-lang-2.4.jar:lib/log4j-1.2.15.jar:lib/slf4j-api-1.4.2.jar:lib/slf4j-simple-1.4.2.jar:lib/jms.jar:lib/tibcrypt.jar:lib/tibemsd_sec.jar:lib/tibjms.jar:lib/tibjmsadmin.jar:lib/tibjmsapps.jar:lib/tibjmsufo.jar:lib/tibrvjms.jar
-            </classpath>
-            <impl-class>com.singularity.ee.agent.systemagent.monitors.common.TibcoEMSMonitor3</impl-class>
+            <classpath>tibcoems-monitoring-extension.jar;lib/tibcrypt.jar;lib/tibemsd_sec.jar;lib/tibjms.jar;lib/tibjmsadmin.jar;lib/tibjmsapps.jar;lib/tibjmsufo.jar;lib/tibrvjms.jar</classpath>
+            <impl-class>com.appdynamics.extensions.tibco.TibcoEMSMonitor</impl-class>
         </java-task>
     </monitor-run-task>
 </monitor>
