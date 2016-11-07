@@ -9,8 +9,10 @@ import com.google.common.collect.Maps;
 import com.singularity.ee.agent.systemagent.api.MetricWriter;
 import com.tibco.tibjms.TibjmsSSL;
 import com.tibco.tibjms.admin.ConnectionInfo;
+import com.tibco.tibjms.admin.ConsumerInfo;
 import com.tibco.tibjms.admin.DestinationInfo;
 import com.tibco.tibjms.admin.DurableInfo;
+import com.tibco.tibjms.admin.ProducerInfo;
 import com.tibco.tibjms.admin.QueueInfo;
 import com.tibco.tibjms.admin.RouteInfo;
 import com.tibco.tibjms.admin.ServerInfo;
@@ -18,8 +20,6 @@ import com.tibco.tibjms.admin.StatData;
 import com.tibco.tibjms.admin.TibjmsAdmin;
 import com.tibco.tibjms.admin.TibjmsAdminException;
 import com.tibco.tibjms.admin.TopicInfo;
-import com.tibco.tibjms.admin.UserInfo;
-import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
@@ -149,6 +149,9 @@ public class TibcoEMSMetricFetcher implements Runnable {
             collectDurableInfo(tibjmsAdmin.getDurables());
             collectRoutesInfo(tibjmsAdmin.getRoutes());
 
+            collectConsumerInfo(tibjmsAdmin.getConsumers(), excludeQueuePatterns, excludeTopicPatterns, showSystem, showTemp);
+            collectProducerInfo(tibjmsAdmin.getProducersStatistics(), excludeQueuePatterns, excludeTopicPatterns, showSystem, showTemp);
+
             putQueueInfos(tibjmsAdmin, excludeQueuePatterns, showSystem, showTemp);
             putTopicInfos(tibjmsAdmin, excludeTopicPatterns, showSystem, showTemp);
 
@@ -164,7 +167,7 @@ public class TibcoEMSMetricFetcher implements Runnable {
     private void printMetrics(String displayName) {
         String metricPrefix = configuration.getMetricPrefix();
         for (Map.Entry<String, String> metric : valueMap.entrySet()) {
-            configuration.getMetricWriter().printMetric(metricPrefix+"|"+displayName + "|" + metric.getKey(), metric.getValue(), MetricWriter.METRIC_AGGREGATION_TYPE_OBSERVATION,
+            configuration.getMetricWriter().printMetric(metricPrefix + "|" + displayName + "|" + metric.getKey(), metric.getValue(), MetricWriter.METRIC_AGGREGATION_TYPE_OBSERVATION,
                     MetricWriter.METRIC_TIME_ROLLUP_TYPE_CURRENT,
                     MetricWriter.METRIC_CLUSTER_ROLLUP_TYPE_COLLECTIVE);
         }
@@ -178,7 +181,7 @@ public class TibcoEMSMetricFetcher implements Runnable {
             logger.warn("Unable to get queue statistics");
         } else {
             for (QueueInfo queueInfo : queueInfos) {
-                if (shouldMonitorDestination(queueInfo, excludeQueuePatterns, showSystem, showTemp)) {
+                if (shouldMonitorDestination(queueInfo.getName(), excludeQueuePatterns, showSystem, showTemp)) {
                     logger.info("Publishing metrics for queue " + queueInfo.getName());
                     putQueueInfo(queueInfo);
                 }
@@ -228,7 +231,8 @@ public class TibcoEMSMetricFetcher implements Runnable {
 
 
         valueMap.put(prefix + "|" + key, Long.toString(value));
-}
+    }
+
     private void putTopicInfos(TibjmsAdmin conn, List<Pattern> excludeTopicPatterns, boolean showSystem, boolean showTemp) throws TibjmsAdminException {
         logger.debug("Retrieving topic information");
         TopicInfo[] topicInfos = conn.getTopicsStatistics();
@@ -237,7 +241,7 @@ public class TibcoEMSMetricFetcher implements Runnable {
             logger.warn("Unable to get topic statistics");
         } else {
             for (TopicInfo topicInfo : topicInfos) {
-                if (shouldMonitorDestination(topicInfo, excludeTopicPatterns, showSystem, showTemp)) {
+                if (shouldMonitorDestination(topicInfo.getName(), excludeTopicPatterns, showSystem, showTemp)) {
                     logger.info("Publishing metrics for topic " + topicInfo.getName());
                     putTopicInfo(topicInfo);
                 }
@@ -255,8 +259,7 @@ public class TibcoEMSMetricFetcher implements Runnable {
         putDestinationValue(prefix, "DurableCount", topicInfo.getDurableCount());
     }
 
-    private boolean shouldMonitorDestination(DestinationInfo destInfo, List<Pattern> patternsToExclude, boolean showSystem, boolean showTemp) {
-        String destName = destInfo.getName();
+    private boolean shouldMonitorDestination(String destName, List<Pattern> patternsToExclude, boolean showSystem, boolean showTemp) {
 
         if (destName.startsWith("$TMP$.") && !showTemp) {
             logger.debug("Skipping temporary destination '" + destName + "'");
@@ -287,12 +290,98 @@ public class TibcoEMSMetricFetcher implements Runnable {
         valueMap.put(key, value.toString());
     }
 
+    private void collectProducerInfo(ProducerInfo[] producers, List<Pattern> excludeQueuePatterns, List<Pattern> excludeTopicPatterns, boolean showSystem, boolean showTemp) {
+
+        if (producers == null || producers.length <= 0) {
+            logger.info("No producers found to get the producers metrics");
+        }
+
+        for (ProducerInfo producerInfo : producers) {
+            String prefix = "Producers|" + producerInfo.getID() + "|";
+            int destinationType = producerInfo.getDestinationType();
+            String destinationName = producerInfo.getDestinationName();
+
+            if (destinationType == 2) {
+                boolean monitor = shouldMonitorDestination(destinationName, excludeTopicPatterns, showSystem, showTemp);
+                if (!monitor) { //Skipping this destination as configured
+                    return;
+                }
+            } else {
+                boolean monitor = shouldMonitorDestination(destinationName, excludeQueuePatterns, showSystem, showTemp);
+                if (!monitor) { //Skipping this destination as configured
+                    return;
+                }
+            }
+
+            if (destinationType == 2) {
+                prefix += "topic|";
+            } else {
+                prefix += "queue|";
+            }
+            prefix += destinationName;
+
+            putDestinationValue(prefix, "ConnectionID", producerInfo.getConnectionID());
+            putDestinationValue(prefix, "SessionID", producerInfo.getSessionID());
+            putDestinationValue(prefix, "SessionID", producerInfo.getCreateTime());
+            StatData statistics = producerInfo.getStatistics();
+            if (statistics != null) {
+                putDestinationValue(prefix, "TotalMessages", statistics.getTotalMessages());
+                putDestinationValue(prefix, "TotalBytes", statistics.getTotalBytes());
+                putDestinationValue(prefix, "MessageRate", statistics.getMessageRate());
+            }
+
+        }
+
+    }
+
+    private void collectConsumerInfo(ConsumerInfo[] consumers, List<Pattern> excludeQueuePatterns, List<Pattern> excludeTopicPatterns, boolean showSystem, boolean showTemp) {
+        if (consumers == null || consumers.length <= 0) {
+            logger.info("No consumers found to get the consumers metrics");
+        }
+
+        for (ConsumerInfo consumerInfo : consumers) {
+            String prefix = "Consumers|" + consumerInfo.getID() + "|";
+            int destinationType = consumerInfo.getDestinationType();
+            String destinationName = consumerInfo.getDestinationName();
+
+            if (destinationType == 2) {
+                boolean monitor = shouldMonitorDestination(destinationName, excludeTopicPatterns, showSystem, showTemp);
+                if (!monitor) { //Skipping this destination as configured
+                    return;
+                }
+            } else {
+                boolean monitor = shouldMonitorDestination(destinationName, excludeQueuePatterns, showSystem, showTemp);
+                if (!monitor) { //Skipping this destination as configured
+                    return;
+                }
+            }
+
+            if (destinationType == 2) {
+                prefix += "topic|";
+            } else {
+                prefix += "queue|";
+            }
+            prefix += destinationName;
+
+            putDestinationValue(prefix, "ConnectionID", consumerInfo.getConnectionID());
+            putDestinationValue(prefix, "SessionID", consumerInfo.getSessionID());
+            putDestinationValue(prefix, "SessionID", consumerInfo.getCreateTime());
+            StatData statistics = consumerInfo.getStatistics();
+            if (statistics != null) {
+                putDestinationValue(prefix, "TotalMessages", statistics.getTotalMessages());
+                putDestinationValue(prefix, "TotalBytes", statistics.getTotalBytes());
+                putDestinationValue(prefix, "MessageRate", statistics.getMessageRate());
+            }
+        }
+
+    }
+
     private void collectRoutesInfo(RouteInfo[] routes) {
-        if(routes == null || routes.length <= 0) {
+        if (routes == null || routes.length <= 0) {
             logger.info("No routes found to get the routes metrics");
         }
 
-        for(RouteInfo routeInfo : routes) {
+        for (RouteInfo routeInfo : routes) {
             String prefix = "Routes|" + routeInfo.getName();
             putDestinationValue(prefix, "InboundMessageRate", routeInfo.getInboundStatistics().getMessageRate());
             putDestinationValue(prefix, "InboundTotalMessages", routeInfo.getInboundStatistics().getTotalMessages());
@@ -302,11 +391,11 @@ public class TibcoEMSMetricFetcher implements Runnable {
     }
 
     private void collectDurableInfo(DurableInfo[] durables) {
-        if(durables == null || durables.length <= 0) {
+        if (durables == null || durables.length <= 0) {
             logger.info("No durables found to get the durables metrics");
         }
 
-        for(DurableInfo durableInfo : durables) {
+        for (DurableInfo durableInfo : durables) {
             String prefix = "Durables|" + durableInfo.getDurableName();
             putDestinationValue(prefix, "PendingMessageCount", durableInfo.getPendingMessageCount());
             putDestinationValue(prefix, "PendingMessageSize", durableInfo.getPendingMessageSize());
@@ -315,12 +404,12 @@ public class TibcoEMSMetricFetcher implements Runnable {
 
     private void collectConnectionInfo(ConnectionInfo[] connections) {
 
-        if(connections == null || connections.length <= 0) {
+        if (connections == null || connections.length <= 0) {
             logger.info("No Connections found to get the connection metrics");
         }
 
-        for(ConnectionInfo connectionInfo : connections) {
-            String prefix = "Connections|" + connectionInfo.getID()+"|"+connectionInfo.getHost()+"|"+connectionInfo.getType();
+        for (ConnectionInfo connectionInfo : connections) {
+            String prefix = "Connections|" + connectionInfo.getID() + "|" + connectionInfo.getHost() + "|" + connectionInfo.getType();
             putDestinationValue(prefix, "SessionCount", connectionInfo.getSessionCount());
             putDestinationValue(prefix, "ConsumerCount", connectionInfo.getConsumerCount());
             putDestinationValue(prefix, "ProducerCount", connectionInfo.getProducerCount());
