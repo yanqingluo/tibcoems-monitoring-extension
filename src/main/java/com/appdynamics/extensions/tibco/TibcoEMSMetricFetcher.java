@@ -119,11 +119,22 @@ public class TibcoEMSMetricFetcher implements Runnable {
             }
         }
 
+        TibjmsAdmin tibjmsAdmin = null;
         try {
-            TibjmsAdmin tibjmsAdmin = new TibjmsAdmin(emsURL, user, plainPassword, sslParams);
+            tibjmsAdmin = new TibjmsAdmin(emsURL, user, plainPassword, sslParams);
             collectMetrics(tibjmsAdmin, displayName, showSystem, showTemp, excludeQueuePatterns, excludeTopicPatterns);
         } catch (TibjmsAdminException e) {
             logger.error("Error while collecting metrics from Tibco EMS server [ " + displayName + " ]", e);
+        } finally {
+            if(tibjmsAdmin != null) {
+                try {
+                    tibjmsAdmin.close();
+                } catch (TibjmsAdminException e) {
+                    logger.error("Error while closing the connection", e);
+                }
+            }
+
+
         }
 
     }
@@ -174,7 +185,11 @@ public class TibcoEMSMetricFetcher implements Runnable {
     }
 
     private void putQueueInfos(TibjmsAdmin conn, List<Pattern> excludeQueuePatterns, boolean showSystem, boolean showTemp) throws TibjmsAdminException {
-        logger.debug("Retrieving queue information");
+
+        if(logger.isDebugEnabled()) {
+            logger.debug("Collecting queues info");
+        }
+
         QueueInfo[] queueInfos = conn.getQueuesStatistics();
 
         if (queueInfos == null) {
@@ -234,7 +249,11 @@ public class TibcoEMSMetricFetcher implements Runnable {
     }
 
     private void putTopicInfos(TibjmsAdmin conn, List<Pattern> excludeTopicPatterns, boolean showSystem, boolean showTemp) throws TibjmsAdminException {
-        logger.debug("Retrieving topic information");
+
+        if(logger.isDebugEnabled()) {
+            logger.debug("Collecting topics info");
+        }
+
         TopicInfo[] topicInfos = conn.getTopicsStatistics();
 
         if (topicInfos == null) {
@@ -292,6 +311,10 @@ public class TibcoEMSMetricFetcher implements Runnable {
 
     private void collectProducerInfo(ProducerInfo[] producers, List<Pattern> excludeQueuePatterns, List<Pattern> excludeTopicPatterns, boolean showSystem, boolean showTemp) {
 
+        if(logger.isDebugEnabled()) {
+            logger.debug("Collecting producers info");
+        }
+
         if (producers == null || producers.length <= 0) {
             logger.info("No producers found to get the producers metrics");
         }
@@ -335,6 +358,11 @@ public class TibcoEMSMetricFetcher implements Runnable {
     }
 
     private void collectConsumerInfo(ConsumerInfo[] consumers, List<Pattern> excludeQueuePatterns, List<Pattern> excludeTopicPatterns, boolean showSystem, boolean showTemp) {
+
+        if(logger.isDebugEnabled()) {
+            logger.debug("Collecting consumers info");
+        }
+
         if (consumers == null || consumers.length <= 0) {
             logger.info("No consumers found to get the consumers metrics");
         }
@@ -377,6 +405,11 @@ public class TibcoEMSMetricFetcher implements Runnable {
     }
 
     private void collectRoutesInfo(RouteInfo[] routes) {
+
+        if(logger.isDebugEnabled()) {
+            logger.debug("Collecting routes info");
+        }
+
         if (routes == null || routes.length <= 0) {
             logger.info("No routes found to get the routes metrics");
         }
@@ -391,6 +424,11 @@ public class TibcoEMSMetricFetcher implements Runnable {
     }
 
     private void collectDurableInfo(DurableInfo[] durables) {
+
+        if(logger.isDebugEnabled()) {
+            logger.debug("Collecting durables info");
+        }
+
         if (durables == null || durables.length <= 0) {
             logger.info("No durables found to get the durables metrics");
         }
@@ -403,6 +441,10 @@ public class TibcoEMSMetricFetcher implements Runnable {
     }
 
     private void collectConnectionInfo(ConnectionInfo[] connections) {
+
+        if(logger.isDebugEnabled()) {
+            logger.debug("Collecting connections info");
+        }
 
         if (connections == null || connections.length <= 0) {
             logger.info("No Connections found to get the connection metrics");
@@ -420,6 +462,10 @@ public class TibcoEMSMetricFetcher implements Runnable {
     }
 
     private void collectServerInfo(ServerInfo serverInfo) {
+
+        if(logger.isDebugEnabled()) {
+            logger.debug("Collecting server info");
+        }
 
         putServerValue("DiskReadRate", serverInfo.getDiskReadRate());
         putServerValue("DiskWriteRate", serverInfo.getDiskWriteRate());
@@ -477,8 +523,10 @@ public class TibcoEMSMetricFetcher implements Runnable {
             }
         }
 
-        logger.info(String.format("key='%s' old=%s new=%s diff=%d",
-                key, oldResultStr, resultStr, delta));
+        if(logger.isDebugEnabled()) {
+            logger.debug(String.format("key='%s' old=%s new=%s diff=%d",
+                    key, oldResultStr, resultStr, delta));
+        }
 
         return delta;
     }
