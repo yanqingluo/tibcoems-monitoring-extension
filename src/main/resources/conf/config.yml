@@ -12,14 +12,15 @@ emsServers:
      # Supports tcp and ssl
      protocol: "tcp"
      user: "admin"
+     # password or encryptedPassword and encryptionKey are required
      password:
      encryptedPassword:
      encryptionKey:
-     collectConnections: true
-     collectDurables: true
-     collectRoutes: true
-     collectConsumers: true
-     collectProducers: true
+     collectConnections: false
+     collectDurables: false
+     collectRoutes: false
+     collectConsumers: false
+     collectProducers: false
      collectQueues: true
      collectTopics: true
      #config to show temp queues and topics

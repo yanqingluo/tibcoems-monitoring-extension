@@ -359,7 +359,6 @@ public class TibcoEMSMetricFetcher implements Runnable {
 
             putDestinationValue(prefix, "ConnectionID", producerInfo.getConnectionID());
             putDestinationValue(prefix, "SessionID", producerInfo.getSessionID());
-            putDestinationValue(prefix, "SessionID", producerInfo.getCreateTime());
             StatData statistics = producerInfo.getStatistics();
             if (statistics != null) {
                 putDestinationValue(prefix, "TotalMessages", statistics.getTotalMessages());
@@ -407,7 +406,6 @@ public class TibcoEMSMetricFetcher implements Runnable {
 
             putDestinationValue(prefix, "ConnectionID", consumerInfo.getConnectionID());
             putDestinationValue(prefix, "SessionID", consumerInfo.getSessionID());
-            putDestinationValue(prefix, "SessionID", consumerInfo.getCreateTime());
             StatData statistics = consumerInfo.getStatistics();
             if (statistics != null) {
                 putDestinationValue(prefix, "TotalMessages", statistics.getTotalMessages());
