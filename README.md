@@ -4,8 +4,8 @@ TibcoEMSMonitor
 
 ## Introduction
 
-An AppDynamics Machine Agent add-on to report metrics from a [Tibco EMS 
-Server][] and its queues.
+An AppDynamics Machine Agent add-on to report metrics from a Tibco EMS 
+Server and its queues.
 
 Tibco EMS is messaging middleware that provides persistent queues as well as a 
 publish/subscribe mechanism. It can be used as a JMS provider, or it can be 
@@ -56,89 +56,205 @@ Use the `tibemsadmin` utility to change the server configuration.
 
 1. Download TibcoEMSMonitor.zip from the Community.
 2. Copy TibcoEMSMonitor.zip into the directory where you installed the machine 
-   agent, under `$AGENT_HOME/monitors`.
+   agent, under `$MACHINE_AGENT_HOME/monitors`.
 3. Unzip the file. This will create a new directory called `TibcoEMSMonitor`.
-4. In `$AGENT_HOME/monitors/TibcoEMSMonitor`, edit the file `monitor.xml` and 
+4. In `$MACHINE_AGENT_HOME/monitors/TibcoEMSMonitor`, edit the file `config.yml` and 
    configure the extension for your Tibco EMS installation.
 5. Restart the machine agent.
 
 
 ## Configuration
 
-Configuration for this monitor is in the `monitor.xml` file in the monitor 
-directory. All of the configurable options are in the `<task-arguments>` 
-section.
+Configuration for this monitor is in the `config.yml` file in the monitor 
+directory.
 
- * _hostname_ - Name or IP address of the Tibco EMS server. Required.
- * _port_ - TCP port number where the Tibco server is listening. The default value is 7222. Required.
- * _protocol_ - Specify "tcp" to use standard TCP or "ssl" to use SSL. The default is "tcp".
- * _userid_ - Administrative user ID for the Tibco admin interface. The default value is "admin". Required.
- * _password_ - Password for the administrative user ID. The default value is an empty password. Required.
- * _tier_ - Name of the tier in AppDynamics for which the monitor should register its
-   metrics. If not specified, the metrics will be registered on all tiers.
-   Optional.
- * _emsServerName_ - An additional folder to create under the "Custom Metrics" folder. If you are
-   using this extension to monitor several EMS servers, you can use this option
-   to put each server into its own folder. Optional.
- * _showTempQueues_ - If set to true, the monitor will report metrics on temporary queues (defined
-   as any queue whose name starts with `$TMP$.`). **NOTE:** Enabling this option
-   can potentially cause the agent to overflow its metric limit.
- * _showSysQueues_ - If set to true, the monitor will report metrics on system queues (defined as
-   any queue whose name starts with `$sys.`).
- * _queuesToExclude_ - A whitespace-separated list of regex patterns. Queues that match any of the 
-   patterns will be excluded from the output. Optional.
- * _topicsToExclude_ - A whitespace-separated list of regex patterns. Topic names that match any of the 
-   patterns will be excluded from the output. Optional.
+ * host - Name or IP address of the Tibco EMS server. Required.
+ * port - TCP port number where the Tibco server is listening. The default value is 7222. Required.
+ * protocol - Specify "tcp" to use standard TCP or "ssl" to use SSL. The default is "tcp".
+ * user - Administrative user ID for the Tibco admin interface. The default value is "admin". Required.
+ * password - Password for the administrative user ID. The default value is an empty password. Required.
+ * collectConnections - configuration to collect connection related metrics
+ * collectDurables - configuration to collect durables related metrics
+ * collectRoutes - configuration to collect routes related metrics
+ * collectConsumers - configuration to collect consumer related metrics
+ * collectProducers - configuration to collect producer related metrics
+ * collectQueues - configuration to collect queues related metrics
+ * collectTopics - configuration to collect topics related metrics
+ * showTemp - configuration to collect metrics from temp queues
+ * showSystem - configuration to collect metrics from system queues
+ * excludeQueues - Define queues which you want to exclude
+ * excludeTopics - Define topics which you want to exclude
+ 
+ Sample config.yml
+ 
+ ```
+ #########
+## If you are using SSL to connect to EMS, make sure you also set the following:
+##
+## sslIdentityFile: path to the private key and client certificate file (example: conf/client_identity.p12)
+## sslIdentityPassword: password to decrypt the private key
+## sslTrustedCerts: path to the server certificate file (example: conf/server_cert.pem)
+##########
+emsServers:
+   - displayName: "Local EMS"
+     host: "localhost"
+     port: 7222
+     # Supports tcp and ssl
+     protocol: "tcp"
+     user: "admin"
+     # password or encryptedPassword and encryptionKey are required
+     password:
+     encryptedPassword:
+     encryptionKey:
+     collectConnections: false
+     collectDurables: false
+     collectRoutes: false
+     collectConsumers: false
+     collectProducers: false
+     collectQueues: true
+     collectTopics: true
+     #config to show temp queues and topics
+     showTemp: false
+     #config to show system queues and topics
+     showSystem: false
+     excludeQueues: []
+     excludeTopics: []
+     sslIdentityFile:
+     sslIdentityPassword:
+     sslTrustedCerts:
+     #ssl config optional settings
+     sslDebug:
+     sslVerifyHost:
+     sslVerifyHostName:
+     sslVendor:
+   - displayName: "Remote EMS"
+     host: "localhost"
+     port: 7222
+     # Supports tcp and ssl
+     protocol: "tcp"
+     user: "admin"
+     password:
+     encryptedPassword:
+     encryptionKey:
+     collectConnections: true
+     collectDurables: true
+     collectRoutes: true
+     collectConsumers: true
+     collectProducers: true
+     collectQueues: true
+     collectTopics: true
+     #config to show temp queues and topics
+     showTemp: false
+     #config to show system queues and topics
+     showSystem: false
+     excludeQueues: []
+     excludeTopics: []
+
+
+# number of concurrent tasks
+numberOfThreads: 1
+
+#This will create this metric in all the tiers, under this path. Please make sure to have a trailing |
+#metricPrefix: "Custom Metrics|Tibco EMS|"
+
+#This will create it in specific Tier aka Component. Replace <COMPONENT_ID>. Please make sure to have a trailing |.
+#To find out the COMPONENT_ID, please see the screen shot here https://docs.appdynamics.com/display/PRO42/Build+a+Monitoring+Extension+Using+Java
+metricPrefix: "Server|Component:<COMPONENT_ID>|Custom Metrics|Tibco EMS|"
+ 
+ ```
 
 ## Metrics Provided
 
-### Global Instance Metrics
+### Connection Metrics
 
-| Metric Name               | Description                                                           |
-| :------------------------ | :-------------------------------------------------------------------- |
-| DiskReadRate              | Rate at which messages are being read from disk, in bytes per second  |
-| DiskWriteRate             | Rate at which messages are being written to disk, in bytes per second |
-| ConnectionCount           | Current number of connections                                         |
-| MaxConnections            | Maximum number of connections allowed by the server                   |
-| ProducerCount             | Total number of producers                                             |
-| ConsumerCount             | Total number of consumers                                             |
-| PendingMessageCount       | Total number of pending messages                                      |
-| PendingMessageSize        | Total size of pending messages in bytes                               |
-| InboundBytesRate          | Instantaneous inbound bytes per second                                |
-| InboundMessageRate        | Instantaneous inbound messages per second                             |
-| InboundMessageCount       | Total number of inbound messages received since EMS was restarted     |
-| InboundMessagesPerMinute  | Messages received per minute                                          |
-| OutboundBytesRate         | Instantaneous outbound bytes per second                               |
-| OutboundMessageRate       | Instantaneous outbound messages per second                            |
-| OutboundMessageCount      | Number of outbound messages sent since EMS was restarted              |
-| OutboundMessagesPerMinute | Messages sent per minute                                              |
+| Metric Name        |
+| :----------------- |
+| SessionCount       |
+| ConsumerCount      |
+| ProducerCount      | 
+| StartTime          | 
+| UpTime             |
 
 
-### Per-Queue Metrics
+### Durable Metrics
 
-| Metric Name               | Description |
-| :------------------------ | :---------- |
-| ConsumerCount             | Number of consumers for this destination |
-| ReceiverCount             | Number of active receivers on this queue |
-| DeliveredMessageCount     | Total number of messages that have been delivered to consumer applications but have not yet been acknowledged |
-| PendingMessageCount       | Total number of pending messages for this destination |
-| InTransitCount            | Total number of messages that have been delivered to the queue owner but have not yet been acknowledged |
-| FlowControlMaxBytes       | Volume of pending messages (in bytes) at which flow control is enabled for this destination |
-| PendingMessageSize        | Total size for all pending messages for this destination |
-| MaxMsgs                   | Maximum number of messages that the server will store for pending messages bound for this destination |
-| MaxBytes                  | Maximum number of message bytes that the server will store for pending messages bound for this destination |
-| InboundByteRate           | Instantaneous bytes received per second |
-| InboundMessageRate        | Instantaneous messages received per second |
-| InboundByteCount          | Total number of bytes received since EMS was restarted |
-| InboundMessageCount       | Total number of messages received since EMS was restarted |
-| InboundBytesPerMinute     | Bytes received per minute |
-| InboundMessagesPerMinute  | Messages received per minute |
-| OutboundByteRate          | Instantaneous bytes sent per second |
-| OutboundMessageRate       | Instantaneous messages sent per second |
-| OutboundByteCount         | Total number of bytes sent since EMS was restarted |
-| OutboundMessageCount      | Total number of messages sent since EMS was restarted |
-| OutboundBytesPerMinute    | Bytes sent per minute |
-| OutboundMessagesPerMinute | Messages sent per minute |
+| Metric Name            |
+| :--------------------- |
+| PendingMessageCount    |
+| PendingMessageSize     |
+
+### Routes Metrics
+
+| Metric Name            |
+| :--------------------- |
+| InboundMessageRate     |
+| InboundTotalMessages   |
+| OutboundMessageRate    |
+| OutboundTotalMessages  |
+
+### Consumer and Producer Metrics
+
+| Metric Name       |
+| :---------------- |
+| ConnectionID      |
+| SessionID         |
+| TotalMessages     |
+| TotalBytes        |
+| MessageRate       |
+
+### Queue Metrics
+
+| Metric Name                  |
+| :--------------------------- |
+| ConsumerCount                |
+| PendingMessageCount          |
+| PendingMessageSize           |
+| FlowControlMaxBytes          |
+| MaxMsgs                      |
+| MaxBytes                     |
+| InboundByteRate              |
+| InboundMessageRate           |
+| InboundByteCount             |
+| InboundMessageCount          |
+| OutboundByteRate             |
+| OutboundMessageRate          |
+| OutboundByteCount            |
+| OutboundMessageCount         |
+| InboundMessagesPerMinute     |
+| OutboundMessagesPerMinute    |
+| InboundBytesPerMinute        |
+| OutboundBytesPerMinute       |
+| InTransitCount               | 
+| ReceiverCount                |
+| MaxRedelivery                |
+
+### Topic Metrics
+
+| Metric Name                  |
+| :--------------------------- |
+| ConsumerCount                |
+| PendingMessageCount          |
+| PendingMessageSize           |
+| FlowControlMaxBytes          |
+| MaxMsgs                      |
+| MaxBytes                     |
+| InboundByteRate              |
+| InboundMessageRate           |
+| InboundByteCount             |
+| InboundMessageCount          |
+| OutboundByteRate             |
+| OutboundMessageRate          |
+| OutboundByteCount            |
+| OutboundMessageCount         |
+| InboundMessagesPerMinute     |
+| OutboundMessagesPerMinute    |
+| InboundBytesPerMinute        |
+| OutboundBytesPerMinute       |
+| ConsumerCount                | 
+| SubscriberCount              |
+| ActiveDurableCount           |
+| DurableCount                 |
+
 
 
 ## Caution
@@ -151,21 +267,33 @@ when starting the Machine Agent, like this:
 
     java -Dappdynamics.agent.maxMetrics=1000 -jar machineagent.jar
 
+## Password Encryption Support
+
+To avoid setting the clear text password in the config.yml, please follow the process to encrypt the password and set the encrypted password and the encryptionKey in the config.yml
+
+1.  To encrypt password from the commandline go to `<Machine_Agent>`/monitors/TibcoEMSMonitor dir and run the below common
+
+<pre>java -cp "tibcoems-monitoring-extension.jar" com.appdynamics.extensions.crypto.Encryptor myKey myPassword</pre>
+
 
 ## Support
 
 For any questions or feature requests, please contact the [AppDynamics Center 
 of Excellence][].
 
-**Version:** 2.3.7  
+**Version:** 2.4.1.2  
 **Controller Compatibility:** 3.6 or later  
-**Last Updated:** 20-Aug-2015
-**Author:** Todd Radel  
+**Last Updated:** 23-Feb-2017
 
 ------------------------------------------------------------------------------
 
 ## Release Notes
 
+### Version 2.4.1.2
+  - Revamped to support new extension framework
+  - Added support for multiple EMS servers
+  - Moved configuration to config.yml file
+  
 ### Version 2.3.7
   - Added missing `commons-lang.jar` to classpath.
 
@@ -199,6 +327,5 @@ of Excellence][].
   - Rebuilt Ant scripts.
   
 
-[Tibco EMS Server]: http://www.tibco.com/products/automation/messaging/enterprise-messaging/enterprise-message-service/default.jsp
-[AppDynamics Center of Excellence]: mailto:ace-request@appdynamics.com
+[AppDynamics Center of Excellence]: mailto:help@appdynamics.com
 [help@appdynamics.com]: mailto:help@appdynamics.com
