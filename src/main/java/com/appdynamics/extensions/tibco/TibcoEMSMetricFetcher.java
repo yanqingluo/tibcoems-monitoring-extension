@@ -39,14 +39,12 @@ public class TibcoEMSMetricFetcher implements Runnable {
 
     private MonitorConfiguration configuration;
     private Map emsServer;
-    private Map<String, Map<String, String>> cachedStats;
     protected volatile Map<String, String> valueMap;
     private Map<String, String> oldValuesMap;
 
     public TibcoEMSMetricFetcher(MonitorConfiguration configuration, Map emsServer, Map<String, Map<String, String>> cachedStats) {
         this.configuration = configuration;
         this.emsServer = emsServer;
-        this.cachedStats = cachedStats;
 
         String displayName = (String) emsServer.get("displayName");
         oldValuesMap = cachedStats.get(displayName);
@@ -156,15 +154,31 @@ public class TibcoEMSMetricFetcher implements Runnable {
             ServerInfo serverInfo = tibjmsAdmin.getInfo();
             collectServerInfo(serverInfo);
 
-            collectConnectionInfo(tibjmsAdmin.getConnections());
-            collectDurableInfo(tibjmsAdmin.getDurables());
-            collectRoutesInfo(tibjmsAdmin.getRoutes());
+            if((Boolean)emsServer.get("collectConnections")) {
+                collectConnectionInfo(tibjmsAdmin.getConnections());
+            }
 
-            collectConsumerInfo(tibjmsAdmin.getConsumers(), excludeQueuePatterns, excludeTopicPatterns, showSystem, showTemp);
-            collectProducerInfo(tibjmsAdmin.getProducersStatistics(), excludeQueuePatterns, excludeTopicPatterns, showSystem, showTemp);
+            if((Boolean)emsServer.get("collectDurables")) {
+                collectDurableInfo(tibjmsAdmin.getDurables());
+            }
 
-            putQueueInfos(tibjmsAdmin, excludeQueuePatterns, showSystem, showTemp);
-            putTopicInfos(tibjmsAdmin, excludeTopicPatterns, showSystem, showTemp);
+            if((Boolean)emsServer.get("collectRoutes")) {
+                collectRoutesInfo(tibjmsAdmin.getRoutes());
+            }
+
+            if((Boolean)emsServer.get("collectConsumers")) {
+                collectConsumerInfo(tibjmsAdmin.getConsumers(), excludeQueuePatterns, excludeTopicPatterns, showSystem, showTemp);
+            }
+            if((Boolean)emsServer.get("collectProducers")) {
+                collectProducerInfo(tibjmsAdmin.getProducersStatistics(), excludeQueuePatterns, excludeTopicPatterns, showSystem, showTemp);
+            }
+
+            if((Boolean)emsServer.get("collectQueues")) {
+                putQueueInfos(tibjmsAdmin, excludeQueuePatterns, showSystem, showTemp);
+            }
+            if((Boolean)emsServer.get("collectTopics")) {
+                putTopicInfos(tibjmsAdmin, excludeTopicPatterns, showSystem, showTemp);
+            }
 
             printMetrics(displayName);
 

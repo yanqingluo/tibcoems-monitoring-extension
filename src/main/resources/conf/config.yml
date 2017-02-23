@@ -1,3 +1,10 @@
+#########
+## If you are using SSL to connect to EMS, make sure you also set the following:
+##
+## sslIdentityFile: path to the private key and client certificate file (example: conf/client_identity.p12)
+## sslIdentityPassword: password to decrypt the private key
+## sslTrustedCerts: path to the server certificate file (example: conf/server_cert.pem)
+##########
 emsServers:
    - displayName: "Local EMS"
      host: "localhost"
@@ -8,6 +15,13 @@ emsServers:
      password:
      encryptedPassword:
      encryptionKey:
+     collectConnections: true
+     collectDurables: true
+     collectRoutes: true
+     collectConsumers: true
+     collectProducers: true
+     collectQueues: true
+     collectTopics: true
      #config to show temp queues and topics
      showTemp: false
      #config to show system queues and topics
@@ -31,6 +45,13 @@ emsServers:
      password:
      encryptedPassword:
      encryptionKey:
+     collectConnections: true
+     collectDurables: true
+     collectRoutes: true
+     collectConsumers: true
+     collectProducers: true
+     collectQueues: true
+     collectTopics: true
      #config to show temp queues and topics
      showTemp: false
      #config to show system queues and topics

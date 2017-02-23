@@ -13,49 +13,9 @@
         <execution-frequency-in-seconds>60</execution-frequency-in-seconds>
         <execution-timeout-in-secs>60</execution-timeout-in-secs>
 
-        <!--
-
-        Make sure you change the following arguments:
-
-        hostname: name or IP address of the Tibco EMS server
-        protocol: tcp or ssl
-        port: admin port
-        userid: user ID
-        password: password
-        tier: tier name you want the metrics reported under
-
-        If you are using SSL to connect to EMS, make sure you also set the following:
-
-        sslIdentityFile: path to the private key and client certificate file (example: conf/client_identity.p12)
-        sslIdentityPassword: password to decrypt the private key
-        sslTrustedCerts: path to the server certificate file (example: conf/server_cert.pem)
-        -->
-
         <task-arguments>
             <argument name="config-file" is-required="true" default-value="monitors/TibcoEMSMonitor/config.yml"/>
-
-            <!--<argument name="hostname" is-required="true" default-value="10.211.55.4"/>
-            <argument name="protocol" is-required="false" default-value="ssl"/>
-            <argument name="port" is-required="true" default-value="7222"/>
-            <argument name="username" is-required="true" default-value="admin"/>
-            <argument name="password" is-required="true" default-value=""/>
-            <argument name="tier" is-required="false" default-value="TIBCO_EMS"/>
-            <argument name="emsservername" is-required="false" default-value="Tibco EMS Destinations"/>
-            <argument name="showTempQueues" is-required="false" default-value="false"/>
-            <argument name="showSysQueues" is-required="false" default-value="false"/>
-            <argument name="queuesToExclude" is-required="false" default-value="sample1 sample2"/>
-            <argument name="sslIdentityFile" is-required="false" default-value="test/conf/client_identity.p12"/>
-            <argument name="sslIdentityPassword" is-required="false" default-value="password"/>
-            <argument name="sslTrustedCerts" is-required="false" default-value="test/conf/server_cert.pem"/>-->
-
-            <!--
-            Optional settings for SSL
-            <argument name="sslDebug" is-required="false" default-value="true"/>
-            <argument name="sslVerifyHost" is-required="false" default-value="false"/>
-            <argument name="sslVerifyHostName" is-required="false" default-value="false"/>
-            <argument name="sslVendor" is-required="false" default-value="j2se"/>
-            -->
-        </task-arguments>
+s        </task-arguments>
         <java-task>
             <classpath>tibcoems-monitoring-extension.jar;lib/tibcrypt.jar;lib/tibemsd_sec.jar;lib/tibjms.jar;lib/tibjmsadmin.jar;lib/tibjmsapps.jar;lib/tibjmsufo.jar;lib/tibrvjms.jar</classpath>
             <impl-class>com.appdynamics.extensions.tibco.TibcoEMSMonitor</impl-class>
