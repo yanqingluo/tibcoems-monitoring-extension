@@ -13,37 +13,7 @@ emsServers:
      protocol: "tcp"
      user: "admin"
      # password or encryptedPassword and encryptionKey are required
-     password:
-     encryptedPassword:
-     encryptionKey:
-     collectConnections: false
-     collectDurables: false
-     collectRoutes: false
-     collectConsumers: false
-     collectProducers: false
-     collectQueues: true
-     collectTopics: true
-     #config to show temp queues and topics
-     showTemp: false
-     #config to show system queues and topics
-     showSystem: false
-     excludeQueues: []
-     excludeTopics: []
-     sslIdentityFile:
-     sslIdentityPassword:
-     sslTrustedCerts:
-     #ssl config optional settings
-     sslDebug:
-     sslVerifyHost:
-     sslVerifyHostName:
-     sslVendor:
-   - displayName: "Remote EMS"
-     host: "localhost"
-     port: 7222
-     # Supports tcp and ssl
-     protocol: "tcp"
-     user: "admin"
-     password:
+     password: ""
      encryptedPassword:
      encryptionKey:
      collectConnections: true
@@ -57,8 +27,22 @@ emsServers:
      showTemp: false
      #config to show system queues and topics
      showSystem: false
-     excludeQueues: []
+     includeQueues: []
+     excludeQueues: ["satish1"]
+     includeTopics: ["satish"]
      excludeTopics: []
+     includeDurables: []
+     excludeDurables: []
+     includeRoutes: []
+     excludeRoutes: []
+     sslIdentityFile:
+     sslIdentityPassword:
+     sslTrustedCerts:
+     #ssl config optional settings
+     sslDebug:
+     sslVerifyHost:
+     sslVerifyHostName:
+     sslVendor:
 
 
 # number of concurrent tasks

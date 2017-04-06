@@ -42,6 +42,20 @@ public class TibcoEMSMetricFetcher implements Runnable {
     protected volatile Map<String, String> valueMap;
     private Map<String, String> oldValuesMap;
 
+    private enum DestinationType {
+        QUEUE("Queue"), TOPIC("Topic"), PRODUCER("Producer"), CONSUMER("Consumer"), ROUTE("Route"), DURABLE("Durable"), CONNECTION("Connection");
+
+        private String type;
+
+        DestinationType(String type) {
+            this.type = type;
+        }
+
+        public String getType() {
+            return type;
+        }
+    }
+
     public TibcoEMSMetricFetcher(MonitorConfiguration configuration, Map emsServer, Map<String, Map<String, String>> cachedStats) {
         this.configuration = configuration;
         this.emsServer = emsServer;
@@ -65,13 +79,7 @@ public class TibcoEMSMetricFetcher implements Runnable {
         String password = (String) emsServer.get("password");
         String encryptedPassword = (String) emsServer.get("encryptedPassword");
         String encryptionKey = (String) emsServer.get("encryptionKey");
-        boolean showTemp = (Boolean) emsServer.get("showTemp");
-        boolean showSystem = (Boolean) emsServer.get("showSystem");
-        List<String> excludeQueues = (List) emsServer.get("excludeQueues");
-        List<String> excludeTopics = (List) emsServer.get("excludeTopics");
 
-        List<Pattern> excludeQueuePatterns = buildPattern(excludeQueues);
-        List<Pattern> excludeTopicPatterns = buildPattern(excludeTopics);
 
         String emsURL = String.format("%s://%s:%s", protocol, host, port);
         logger.debug(String.format("Connecting to %s as %s", emsURL, user));
@@ -120,21 +128,18 @@ public class TibcoEMSMetricFetcher implements Runnable {
         TibjmsAdmin tibjmsAdmin = null;
         try {
             tibjmsAdmin = new TibjmsAdmin(emsURL, user, plainPassword, sslParams);
-            collectMetrics(tibjmsAdmin, displayName, showSystem, showTemp, excludeQueuePatterns, excludeTopicPatterns);
+            collectMetrics(tibjmsAdmin, displayName);
         } catch (TibjmsAdminException e) {
             logger.error("Error while collecting metrics from Tibco EMS server [ " + displayName + " ]", e);
         } finally {
-            if(tibjmsAdmin != null) {
+            if (tibjmsAdmin != null) {
                 try {
                     tibjmsAdmin.close();
                 } catch (TibjmsAdminException e) {
                     logger.error("Error while closing the connection", e);
                 }
             }
-
-
         }
-
     }
 
     private List<Pattern> buildPattern(List<String> patternStrings) {
@@ -145,39 +150,75 @@ public class TibcoEMSMetricFetcher implements Runnable {
                 patternList.add(Pattern.compile(pattern));
             }
         }
-
         return patternList;
     }
 
-    private void collectMetrics(TibjmsAdmin tibjmsAdmin, String displayName, boolean showSystem, boolean showTemp, List<Pattern> excludeQueuePatterns, List<Pattern> excludeTopicPatterns) throws TibjmsAdminException {
+    private void collectMetrics(TibjmsAdmin tibjmsAdmin, String displayName) throws TibjmsAdminException {
+
+        boolean showTemp = (Boolean) emsServer.get("showTemp");
+        boolean showSystem = (Boolean) emsServer.get("showSystem");
+        List<String> includeQueues = (List) emsServer.get("includeQueues");
+        List<String> excludeQueues = (List) emsServer.get("excludeQueues");
+
+        List<String> includeTopics = (List) emsServer.get("includeTopics");
+        List<String> excludeTopics = (List) emsServer.get("excludeTopics");
+
+        List<String> includeDurables = (List) emsServer.get("includeDurables");
+        List<String> excludeDurables = (List) emsServer.get("excludeDurables");
+
+        List<String> includeRoutes = (List) emsServer.get("includeRoutes");
+        List<String> excludeRoutes = (List) emsServer.get("excludeRoutes");
+
+
+        List<Pattern> includeQueuesPatterns = buildPattern(includeQueues);
+        List<Pattern> excludeQueuePatterns = buildPattern(excludeQueues);
+
+        List<Pattern> includeTopicsPatterns = buildPattern(includeTopics);
+        List<Pattern> excludeTopicPatterns = buildPattern(excludeTopics);
+
+        List<Pattern> includeDurablesPatterns = buildPattern(includeDurables);
+        List<Pattern> excludeDurablesPatterns = buildPattern(excludeDurables);
+
+        List<Pattern> includeRoutesPatterns = buildPattern(includeRoutes);
+        List<Pattern> excludeRoutesPatterns = buildPattern(excludeRoutes);
+
+
         try {
+
             ServerInfo serverInfo = tibjmsAdmin.getInfo();
             collectServerInfo(serverInfo);
 
-            if((Boolean)emsServer.get("collectConnections")) {
+            Boolean collectConnections = (Boolean) emsServer.get("collectConnections");
+            if (collectConnections != null && collectConnections) {
                 collectConnectionInfo(tibjmsAdmin.getConnections());
             }
 
-            if((Boolean)emsServer.get("collectDurables")) {
-                collectDurableInfo(tibjmsAdmin.getDurables());
+            Boolean collectDurables = (Boolean) emsServer.get("collectDurables");
+            if (collectDurables != null && collectDurables) {
+                collectDurableInfo(tibjmsAdmin.getDurables(), includeDurablesPatterns, excludeDurablesPatterns, showSystem, showTemp);
             }
 
-            if((Boolean)emsServer.get("collectRoutes")) {
-                collectRoutesInfo(tibjmsAdmin.getRoutes());
+            Boolean collectRoutes = (Boolean) emsServer.get("collectRoutes");
+            if (collectRoutes != null && collectRoutes) {
+                collectRoutesInfo(tibjmsAdmin.getRoutes(), includeRoutesPatterns, excludeRoutesPatterns, showSystem, showTemp);
             }
 
-            if((Boolean)emsServer.get("collectConsumers")) {
-                collectConsumerInfo(tibjmsAdmin.getConsumers(), excludeQueuePatterns, excludeTopicPatterns, showSystem, showTemp);
+            Boolean collectConsumers = (Boolean) emsServer.get("collectConsumers");
+            if (collectConsumers != null && collectConsumers) {
+                collectConsumerInfo(tibjmsAdmin.getConsumers(), includeQueuesPatterns, excludeQueuePatterns, includeTopicsPatterns, excludeTopicPatterns, showSystem, showTemp);
             }
-            if((Boolean)emsServer.get("collectProducers")) {
-                collectProducerInfo(tibjmsAdmin.getProducersStatistics(), excludeQueuePatterns, excludeTopicPatterns, showSystem, showTemp);
+            Boolean collectProducers = (Boolean) emsServer.get("collectProducers");
+            if (collectProducers != null && collectProducers) {
+                collectProducerInfo(tibjmsAdmin.getProducersStatistics(), includeQueuesPatterns, excludeQueuePatterns, includeTopicsPatterns, excludeTopicPatterns, showSystem, showTemp);
             }
 
-            if((Boolean)emsServer.get("collectQueues")) {
-                putQueueInfos(tibjmsAdmin, excludeQueuePatterns, showSystem, showTemp);
+            Boolean collectQueues = (Boolean) emsServer.get("collectQueues");
+            if (collectQueues != null && collectQueues) {
+                putQueueInfos(tibjmsAdmin, includeQueuesPatterns, excludeQueuePatterns, showSystem, showTemp);
             }
-            if((Boolean)emsServer.get("collectTopics")) {
-                putTopicInfos(tibjmsAdmin, excludeTopicPatterns, showSystem, showTemp);
+            Boolean collectTopics = (Boolean) emsServer.get("collectTopics");
+            if (collectTopics != null && collectTopics) {
+                putTopicInfos(tibjmsAdmin, includeTopicsPatterns, excludeTopicPatterns, showSystem, showTemp);
             }
 
             printMetrics(displayName);
@@ -198,9 +239,9 @@ public class TibcoEMSMetricFetcher implements Runnable {
         }
     }
 
-    private void putQueueInfos(TibjmsAdmin conn, List<Pattern> excludeQueuePatterns, boolean showSystem, boolean showTemp) throws TibjmsAdminException {
+    private void putQueueInfos(TibjmsAdmin conn, List<Pattern> includeQueuesPatterns, List<Pattern> excludeQueuePatterns, boolean showSystem, boolean showTemp) throws TibjmsAdminException {
 
-        if(logger.isDebugEnabled()) {
+        if (logger.isDebugEnabled()) {
             logger.debug("Collecting queues info");
         }
 
@@ -210,7 +251,7 @@ public class TibcoEMSMetricFetcher implements Runnable {
             logger.warn("Unable to get queue statistics");
         } else {
             for (QueueInfo queueInfo : queueInfos) {
-                if (shouldMonitorDestination(queueInfo.getName(), excludeQueuePatterns, showSystem, showTemp)) {
+                if (shouldMonitorDestination(queueInfo.getName(), includeQueuesPatterns, excludeQueuePatterns, showSystem, showTemp, DestinationType.QUEUE)) {
                     logger.info("Publishing metrics for queue " + queueInfo.getName());
                     putQueueInfo(queueInfo);
                 }
@@ -262,9 +303,9 @@ public class TibcoEMSMetricFetcher implements Runnable {
         valueMap.put(prefix + "|" + key, Long.toString(value));
     }
 
-    private void putTopicInfos(TibjmsAdmin conn, List<Pattern> excludeTopicPatterns, boolean showSystem, boolean showTemp) throws TibjmsAdminException {
+    private void putTopicInfos(TibjmsAdmin conn, List<Pattern> includeTopicsPatterns, List<Pattern> excludeTopicPatterns, boolean showSystem, boolean showTemp) throws TibjmsAdminException {
 
-        if(logger.isDebugEnabled()) {
+        if (logger.isDebugEnabled()) {
             logger.debug("Collecting topics info");
         }
 
@@ -274,7 +315,7 @@ public class TibcoEMSMetricFetcher implements Runnable {
             logger.warn("Unable to get topic statistics");
         } else {
             for (TopicInfo topicInfo : topicInfos) {
-                if (shouldMonitorDestination(topicInfo.getName(), excludeTopicPatterns, showSystem, showTemp)) {
+                if (shouldMonitorDestination(topicInfo.getName(), includeTopicsPatterns, excludeTopicPatterns, showSystem, showTemp, DestinationType.TOPIC)) {
                     logger.info("Publishing metrics for topic " + topicInfo.getName());
                     putTopicInfo(topicInfo);
                 }
@@ -292,25 +333,50 @@ public class TibcoEMSMetricFetcher implements Runnable {
         putDestinationValue(prefix, "DurableCount", topicInfo.getDurableCount());
     }
 
-    private boolean shouldMonitorDestination(String destName, List<Pattern> patternsToExclude, boolean showSystem, boolean showTemp) {
+    private boolean shouldMonitorDestination(String destName, List<Pattern> patternsToInclude, List<Pattern> patternsToExclude, boolean showSystem, boolean showTemp, DestinationType destinationType) {
 
-        if (destName.startsWith("$TMP$.") && !showTemp) {
-            logger.debug("Skipping temporary destination '" + destName + "'");
-            return false;
-        } else if (destName.startsWith("$sys.") && !showSystem) {
-            logger.debug("Skipping system destination '" + destName + "'");
-            return false;
-        } else {
-            for (Pattern patternToExclude : patternsToExclude) {
-                Matcher matcher = patternToExclude.matcher(destName);
-                if (matcher.matches()) {
-                    logger.debug(String.format("Skipping queue '%s' due to excluded pattern '%s'",
-                            destName, patternToExclude.pattern()));
-                    return false;
-                }
+        logger.debug("Checking includes and excludes for " + destinationType.getType() + " with name " + destName);
+
+        try {
+            if (destName.startsWith("$TMP$.") && !showTemp) {
+                logger.debug("Skipping temporary " + destinationType.getType() + " '" + destName + "'");
+                return false;
             }
 
-            return true;
+            if (destName.startsWith("$sys.") && !showSystem) {
+                logger.debug("Skipping system " + destinationType.getType() + " '" + destName + "'");
+                return false;
+            }
+
+            if (patternsToInclude != null && patternsToInclude.size() > 0) {
+                logger.debug("Using patterns to include [" + patternsToInclude + "] to filter");
+                for (Pattern patternToInclude : patternsToInclude) {
+                    Matcher matcher = patternToInclude.matcher(destName);
+                    if (matcher.matches()) {
+                        logger.debug(String.format("Including '%s' '%s' due to include pattern '%s'",
+                                destinationType.getType(), destName, patternToInclude.pattern()));
+                        return true;
+                    }
+                }
+            } else if (patternsToExclude != null && patternsToExclude.size() > 0) {
+                logger.debug("Using patterns to exclude [" + patternsToInclude + "] to filter");
+                for (Pattern patternToExclude : patternsToExclude) {
+                    Matcher matcher = patternToExclude.matcher(destName);
+                    if (matcher.matches()) {
+                        logger.debug(String.format("Skipping '%s' '%s' due to excluded pattern '%s'",
+                                destinationType.getType(), destName, patternToExclude.pattern()));
+                        return false;
+                    }
+                }
+
+                logger.debug(String.format("Including '%s' '%s' due to not excluded by any exclude pattern",
+                        destinationType.getType(), destName));
+                return true;
+            }
+            return false;
+        } catch (Exception e) {
+            logger.debug("Error in checking includes and excludes for  " + destinationType.getType() + " with name " + destName);
+            return false;
         }
     }
 
@@ -323,9 +389,9 @@ public class TibcoEMSMetricFetcher implements Runnable {
         valueMap.put(key, value.toString());
     }
 
-    private void collectProducerInfo(ProducerInfo[] producers, List<Pattern> excludeQueuePatterns, List<Pattern> excludeTopicPatterns, boolean showSystem, boolean showTemp) {
+    private void collectProducerInfo(ProducerInfo[] producers, List<Pattern> includeQueuePatterns, List<Pattern> excludeQueuePatterns, List<Pattern> includeTopicPatterns, List<Pattern> excludeTopicPatterns, boolean showSystem, boolean showTemp) {
 
-        if(logger.isDebugEnabled()) {
+        if (logger.isDebugEnabled()) {
             logger.debug("Collecting producers info");
         }
 
@@ -339,14 +405,14 @@ public class TibcoEMSMetricFetcher implements Runnable {
             String destinationName = producerInfo.getDestinationName();
 
             if (destinationType == 2) {
-                boolean monitor = shouldMonitorDestination(destinationName, excludeTopicPatterns, showSystem, showTemp);
+                boolean monitor = shouldMonitorDestination(destinationName, includeQueuePatterns, excludeTopicPatterns, showSystem, showTemp, DestinationType.PRODUCER);
                 if (!monitor) { //Skipping this destination as configured
-                    return;
+                    continue;
                 }
             } else {
-                boolean monitor = shouldMonitorDestination(destinationName, excludeQueuePatterns, showSystem, showTemp);
+                boolean monitor = shouldMonitorDestination(destinationName, includeTopicPatterns, excludeQueuePatterns, showSystem, showTemp, DestinationType.PRODUCER);
                 if (!monitor) { //Skipping this destination as configured
-                    return;
+                    continue;
                 }
             }
 
@@ -365,14 +431,12 @@ public class TibcoEMSMetricFetcher implements Runnable {
                 putDestinationValue(prefix, "TotalBytes", statistics.getTotalBytes());
                 putDestinationValue(prefix, "MessageRate", statistics.getMessageRate());
             }
-
         }
-
     }
 
-    private void collectConsumerInfo(ConsumerInfo[] consumers, List<Pattern> excludeQueuePatterns, List<Pattern> excludeTopicPatterns, boolean showSystem, boolean showTemp) {
+    private void collectConsumerInfo(ConsumerInfo[] consumers, List<Pattern> includeQueuePatterns, List<Pattern> excludeQueuePatterns, List<Pattern> inclludeTopicPatterns, List<Pattern> excludeTopicPatterns, boolean showSystem, boolean showTemp) {
 
-        if(logger.isDebugEnabled()) {
+        if (logger.isDebugEnabled()) {
             logger.debug("Collecting consumers info");
         }
 
@@ -381,21 +445,23 @@ public class TibcoEMSMetricFetcher implements Runnable {
         }
 
         for (ConsumerInfo consumerInfo : consumers) {
-            String prefix = "Consumers|" + consumerInfo.getID() + "|";
+
             int destinationType = consumerInfo.getDestinationType();
             String destinationName = consumerInfo.getDestinationName();
 
             if (destinationType == 2) {
-                boolean monitor = shouldMonitorDestination(destinationName, excludeTopicPatterns, showSystem, showTemp);
+                boolean monitor = shouldMonitorDestination(destinationName, includeQueuePatterns, excludeTopicPatterns, showSystem, showTemp, DestinationType.CONSUMER);
                 if (!monitor) { //Skipping this destination as configured
-                    return;
+                    continue;
                 }
             } else {
-                boolean monitor = shouldMonitorDestination(destinationName, excludeQueuePatterns, showSystem, showTemp);
+                boolean monitor = shouldMonitorDestination(destinationName, inclludeTopicPatterns, excludeQueuePatterns, showSystem, showTemp, DestinationType.CONSUMER);
                 if (!monitor) { //Skipping this destination as configured
-                    return;
+                    continue;
                 }
             }
+
+            String prefix = "Consumers|" + consumerInfo.getID() + "|";
 
             if (destinationType == 2) {
                 prefix += "topic|";
@@ -416,9 +482,9 @@ public class TibcoEMSMetricFetcher implements Runnable {
 
     }
 
-    private void collectRoutesInfo(RouteInfo[] routes) {
+    private void collectRoutesInfo(RouteInfo[] routes, List<Pattern> includeRoutesPatterns, List<Pattern> excludeRoutesPatterns, boolean showSystem, boolean showTemp) {
 
-        if(logger.isDebugEnabled()) {
+        if (logger.isDebugEnabled()) {
             logger.debug("Collecting routes info");
         }
 
@@ -427,17 +493,21 @@ public class TibcoEMSMetricFetcher implements Runnable {
         }
 
         for (RouteInfo routeInfo : routes) {
-            String prefix = "Routes|" + routeInfo.getName();
-            putDestinationValue(prefix, "InboundMessageRate", routeInfo.getInboundStatistics().getMessageRate());
-            putDestinationValue(prefix, "InboundTotalMessages", routeInfo.getInboundStatistics().getTotalMessages());
-            putDestinationValue(prefix, "OutboundMessageRate", routeInfo.getOutboundStatistics().getMessageRate());
-            putDestinationValue(prefix, "OutboundTotalMessages", routeInfo.getOutboundStatistics().getTotalMessages());
+            String routeName = routeInfo.getName();
+
+            if (shouldMonitorDestination(routeName, includeRoutesPatterns, excludeRoutesPatterns, showSystem, showTemp, DestinationType.ROUTE)) {
+                String prefix = "Routes|" + routeName;
+                putDestinationValue(prefix, "InboundMessageRate", routeInfo.getInboundStatistics().getMessageRate());
+                putDestinationValue(prefix, "InboundTotalMessages", routeInfo.getInboundStatistics().getTotalMessages());
+                putDestinationValue(prefix, "OutboundMessageRate", routeInfo.getOutboundStatistics().getMessageRate());
+                putDestinationValue(prefix, "OutboundTotalMessages", routeInfo.getOutboundStatistics().getTotalMessages());
+            }
         }
     }
 
-    private void collectDurableInfo(DurableInfo[] durables) {
+    private void collectDurableInfo(DurableInfo[] durables, List<Pattern> includeDurablesPatterns, List<Pattern> excludeDurablesPatterns, boolean showSystem, boolean showTemp) {
 
-        if(logger.isDebugEnabled()) {
+        if (logger.isDebugEnabled()) {
             logger.debug("Collecting durables info");
         }
 
@@ -446,15 +516,19 @@ public class TibcoEMSMetricFetcher implements Runnable {
         }
 
         for (DurableInfo durableInfo : durables) {
-            String prefix = "Durables|" + durableInfo.getDurableName();
-            putDestinationValue(prefix, "PendingMessageCount", durableInfo.getPendingMessageCount());
-            putDestinationValue(prefix, "PendingMessageSize", durableInfo.getPendingMessageSize());
+            String durableName = durableInfo.getDurableName();
+
+            if (shouldMonitorDestination(durableName, includeDurablesPatterns, excludeDurablesPatterns, showSystem, showTemp, DestinationType.DURABLE)) {
+                String prefix = "Durables|" + durableName;
+                putDestinationValue(prefix, "PendingMessageCount", durableInfo.getPendingMessageCount());
+                putDestinationValue(prefix, "PendingMessageSize", durableInfo.getPendingMessageSize());
+            }
         }
     }
 
     private void collectConnectionInfo(ConnectionInfo[] connections) {
 
-        if(logger.isDebugEnabled()) {
+        if (logger.isDebugEnabled()) {
             logger.debug("Collecting connections info");
         }
 
@@ -475,7 +549,7 @@ public class TibcoEMSMetricFetcher implements Runnable {
 
     private void collectServerInfo(ServerInfo serverInfo) {
 
-        if(logger.isDebugEnabled()) {
+        if (logger.isDebugEnabled()) {
             logger.debug("Collecting server info");
         }
 
@@ -516,7 +590,6 @@ public class TibcoEMSMetricFetcher implements Runnable {
 
         putServerValue("InboundMessagesPerMinute", getDeltaValue("InboundMessageCount"));
         putServerValue("OutboundMessagesPerMinute", getDeltaValue("OutboundMessageCount"));
-
     }
 
     protected long getDeltaValue(String key) {
@@ -535,11 +608,10 @@ public class TibcoEMSMetricFetcher implements Runnable {
             }
         }
 
-        if(logger.isDebugEnabled()) {
+        if (logger.isDebugEnabled()) {
             logger.debug(String.format("key='%s' old=%s new=%s diff=%d",
                     key, oldResultStr, resultStr, delta));
         }
-
         return delta;
     }
 
