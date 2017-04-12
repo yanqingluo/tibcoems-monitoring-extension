@@ -31,7 +31,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * @author Satish Muddam
+ * @author Satish Muddam, Kevin Mcmanus
  */
 public class TibcoEMSMetricFetcher implements Runnable {
 
@@ -267,6 +267,8 @@ public class TibcoEMSMetricFetcher implements Runnable {
         putDestinationValue(prefix, "InTransitCount", queueInfo.getInTransitMessageCount());
         putDestinationValue(prefix, "ReceiverCount", queueInfo.getReceiverCount());
         putDestinationValue(prefix, "MaxRedelivery", queueInfo.getMaxRedelivery());
+
+        putDestinationValue(prefix, "DeliveredMessageCount", queueInfo.getDeliveredMessageCount());
     }
 
     private void putDestinationInfo(String prefix, DestinationInfo destInfo) {
@@ -501,6 +503,12 @@ public class TibcoEMSMetricFetcher implements Runnable {
                 putDestinationValue(prefix, "InboundTotalMessages", routeInfo.getInboundStatistics().getTotalMessages());
                 putDestinationValue(prefix, "OutboundMessageRate", routeInfo.getOutboundStatistics().getMessageRate());
                 putDestinationValue(prefix, "OutboundTotalMessages", routeInfo.getOutboundStatistics().getTotalMessages());
+
+                putDestinationValue(prefix, "BacklogCount", routeInfo.getBacklogCount());
+                putDestinationValue(prefix, "BacklogSize", routeInfo.getBacklogSize());
+                putDestinationValue(prefix, "InboundByteRate", routeInfo.getInboundStatistics().getByteRate());
+                putDestinationValue(prefix, "IsConnected", routeInfo.isConnected() ? 1 : 0);
+                putDestinationValue(prefix, "OutboundByteRate", routeInfo.getOutboundStatistics().getByteRate());
             }
         }
     }
@@ -590,6 +598,26 @@ public class TibcoEMSMetricFetcher implements Runnable {
 
         putServerValue("InboundMessagesPerMinute", getDeltaValue("InboundMessageCount"));
         putServerValue("OutboundMessagesPerMinute", getDeltaValue("OutboundMessageCount"));
+
+        putServerValue("DurableCount", serverInfo.getDurableCount());
+        putServerValue("LogFileSize", serverInfo.getLogFileSize());
+        putServerValue("ServerHeartbeatClientInterval", serverInfo.getServerHeartbeatClientInterval());
+        putServerValue("ServerTimeoutClientConnection", serverInfo.getServerTimeoutClientConnection());
+        putServerValue("FaultTolerantActivation", serverInfo.getFaultTolerantActivation());
+        putServerValue("FaultTolerantHeartbeat", serverInfo.getFaultTolerantHeartbeat());
+        putServerValue("FaultTolerantReconnectTimeout", serverInfo.getFaultTolerantReconnectTimeout());
+        putServerValue("LogFileMaxSize", serverInfo.getLogFileMaxSize());
+        putServerValue("MaxStatisticsMemory", serverInfo.getMaxStatisticsMemory());
+        putServerValue("ReserveMemory", serverInfo.getReserveMemory());
+        putServerValue("RouteRecoverCount", serverInfo.getRouteRecoverCount());
+        putServerValue("RouteRecoverInterval", serverInfo.getRouteRecoverInterval());
+        putServerValue("ServerHeartbeatClientInterval", serverInfo.getServerHeartbeatClientInterval());
+        putServerValue("ClientHeartbeatServerInterval", serverInfo.getClientHeartbeatServerInterval());
+        putServerValue("ClientTimeoutServerConnection", serverInfo.getClientTimeoutServerConnection());
+        putServerValue("ServerTimeoutServerConnection", serverInfo.getServerTimeoutServerConnection());
+        putServerValue("StatisticsCleanupInterval", serverInfo.getStatisticsCleanupInterval());
+        putServerValue("IsActiveServer", serverInfo.getState() == ServerInfo.SERVER_ACTIVE ? 1 : 0);
+        putServerValue("IsFaultTolerantStandbyServer", serverInfo.getState() == ServerInfo.SERVER_FT_STANDBY ? 1 : 0);
     }
 
     protected long getDeltaValue(String key) {
