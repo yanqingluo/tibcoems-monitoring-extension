@@ -91,6 +91,9 @@ public class TibcoEMSMetricFetcher implements Runnable {
         if (protocol.equals("ssl")) {
             String sslIdentityFile = (String) emsServer.get("sslIdentityFile");
             String sslIdentityPassword = (String) emsServer.get("sslIdentityPassword");
+            String sslIdentityEncryptedPassword = (String) emsServer.get("sslIdentityEncryptedPassword");
+            String sslIdentityPlainPassword = getPassword(sslIdentityPassword, sslIdentityEncryptedPassword, encryptionKey);
+
             String sslTrustedCerts = (String) emsServer.get("sslTrustedCerts");
 
 
@@ -99,8 +102,8 @@ public class TibcoEMSMetricFetcher implements Runnable {
             }
 
 
-            if (!Strings.isNullOrEmpty(sslIdentityPassword)) {
-                sslParams.put(TibjmsSSL.PASSWORD, sslIdentityPassword);
+            if (!Strings.isNullOrEmpty(sslIdentityPlainPassword)) {
+                sslParams.put(TibjmsSSL.PASSWORD, sslIdentityPlainPassword);
             }
             if (!Strings.isNullOrEmpty(sslTrustedCerts)) {
                 sslParams.put(TibjmsSSL.TRUSTED_CERTIFICATES, sslTrustedCerts);

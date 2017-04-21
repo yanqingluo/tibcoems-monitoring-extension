@@ -7,7 +7,7 @@
 ##########
 emsServers:
    - displayName: "Local EMS"
-     host: "localhost"
+     host: "192.168.1.9"
      port: 7222
      # Supports tcp and ssl
      protocol: "tcp"
@@ -37,6 +37,7 @@ emsServers:
      excludeRoutes: []
      sslIdentityFile:
      sslIdentityPassword:
+     sslIdentityEncryptedPassword:
      sslTrustedCerts:
      #ssl config optional settings
      sslDebug:
